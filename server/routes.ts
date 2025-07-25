@@ -7,6 +7,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { insertSwingAnalysisSchema, insertClubSchema, insertUserPreferencesSchema } from "@shared/schema";
 import { analyzeGolfSwing } from "./gemini";
+import { extractFramesFromVideo, getFrameUrl } from "./videoFrameExtractor";
 
 const upload = multer({
   dest: "uploads/",
@@ -89,16 +90,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Analyze with Gemini
       const analysisResult = await analyzeGolfSwing(videoPath);
 
+      // Extract frames from video at timestamps mentioned in swing phases
+      let frameExtractions = [];
+      try {
+        frameExtractions = await extractFramesFromVideo(
+          videoPath,
+          '', // Will use analysis ID later
+          analysisResult.swingPhases
+        );
+      } catch (error) {
+        console.error("Failed to extract frames:", error);
+        // Continue without frames if extraction fails
+      }
+
       // Create analysis record
       const analysisData = {
         userId,
         videoPath: videoPath,
         title,
+        frameExtractions,
         ...analysisResult
       };
 
       const validatedData = insertSwingAnalysisSchema.parse(analysisData);
       const analysis = await storage.createSwingAnalysis(validatedData);
+
+      // Now extract frames with the correct analysis ID
+      if (frameExtractions.length === 0) {
+        try {
+          const updatedFrameExtractions = await extractFramesFromVideo(
+            videoPath,
+            analysis.id,
+            analysisResult.swingPhases
+          );
+          await storage.updateSwingAnalysis(analysis.id, { frameExtractions: updatedFrameExtractions });
+        } catch (error) {
+          console.error("Failed to extract frames with analysis ID:", error);
+        }
+      }
 
       res.json(analysis);
     } catch (error) {
@@ -404,6 +433,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error activating prompt:", error);
       res.status(500).json({ message: "Failed to activate prompt" });
+    }
+  });
+
+  // Serve frame images
+  app.get('/api/frames/:analysisId/:frameName', (req, res) => {
+    const { analysisId, frameName } = req.params;
+    const framePath = path.join('uploads', 'frames', analysisId, frameName);
+    
+    if (fs.existsSync(framePath)) {
+      res.sendFile(path.resolve(framePath));
+    } else {
+      res.status(404).json({ message: 'Frame not found' });
     }
   });
 

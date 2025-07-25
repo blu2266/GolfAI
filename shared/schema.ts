@@ -73,6 +73,7 @@ export const swingAnalyses = pgTable("swing_analyses", {
   swingPhases: json("swing_phases").$type<SwingPhase[]>().notNull(),
   keyMetrics: json("key_metrics").$type<KeyMetric[]>().notNull(),
   recommendations: json("recommendations").$type<Recommendation[]>().notNull(),
+  frameExtractions: json("frame_extractions").$type<FrameExtraction[]>(),
   clubId: varchar("club_id").references(() => clubs.id),
   isSaved: boolean("is_saved").default(false).notNull(),
   notes: text("notes"),
@@ -100,6 +101,11 @@ export type Recommendation = {
   description: string;
   priority: 'High Impact' | 'Medium Impact' | 'Low Impact';
   category: string;
+};
+
+export type FrameExtraction = {
+  timestamp: string;
+  framePath: string;
 };
 
 export const insertUserSchema = createInsertSchema(users).omit({

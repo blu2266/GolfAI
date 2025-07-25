@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { VideoPlayer } from "@/components/video-player";
-import { VideoFrameExtractor } from "@/components/video-frame-extractor";
+
 import { ArrowLeft, Star, TrendingUp, Lightbulb, ArrowRight, Target, Save, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { SwingAnalysis, Club } from "@shared/schema";
@@ -243,11 +243,21 @@ export function AnalysisResults({ analysisId, onBack }: AnalysisResultsProps) {
                 <div className="flex gap-4">
                   {/* Video Frame Thumbnail */}
                   <div className="flex-shrink-0">
-                    <VideoFrameExtractor
-                      videoSrc={analysis.videoPath.startsWith("sample") ? "" : `/api/videos/${analysis.videoPath.split('/').pop()}`}
-                      timestamp={phase.timestamp}
-                      className="w-24 h-16 rounded-lg object-cover shadow-sm"
-                    />
+                    {analysis.frameExtractions && analysis.frameExtractions.find(frame => frame.timestamp === phase.timestamp) ? (
+                      <img 
+                        src={`/api/frames/${analysis.id}/${phase.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}.jpg`}
+                        alt={`${phase.name} frame`}
+                        className="w-24 h-16 rounded-lg object-cover shadow-sm bg-slate-200"
+                        onError={(e) => {
+                          // Fallback to gray placeholder if frame not found
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                        }}
+                      />
+                    ) : null}
+                    <div className="w-24 h-16 rounded-lg bg-slate-200 shadow-sm flex items-center justify-center text-slate-400 text-xs hidden">
+                      No Preview
+                    </div>
                   </div>
                   
                   {/* Phase Content */}
