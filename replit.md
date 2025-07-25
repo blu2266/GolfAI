@@ -106,17 +106,22 @@ The application follows a full-stack architecture with a React frontend, Express
 - **Progress Tracking**: Performance trends visualization with charts showing improvement over time
 - **User Profiles**: Settings management and preferences (units, handicap)
 - **Enhanced Navigation**: Bottom navigation bar with proper routing between pages
+- **Replit Authentication**: Integrated Replit OpenID Connect for secure user authentication
+- **Admin Role System**: Added admin functionality for dynamic AI prompt management
 
 ### New Pages Added
 - `/history` - View saved swing analyses filtered by club
 - `/progress` - Performance metrics and trends over time
 - `/profile` - User settings and golf bag management
+- `/admin` - Admin panel for managing AI prompts (admin users only)
 
 ### New API Endpoints
 - `PATCH /api/swing-analyses/:id/save` - Save/unsave analysis
-- `GET /api/swing-analyses/saved/:userId` - Get saved analyses
+- `GET /api/swing-analyses/saved` - Get saved analyses
 - `GET/POST/PATCH/DELETE /api/clubs` - Club management
-- `GET/PUT /api/preferences/:userId` - User preferences
+- `GET/PUT /api/preferences` - User preferences
+- `GET/POST/PATCH /api/admin/prompts` - Admin prompt management
+- `POST /api/admin/prompts/:id/activate` - Activate specific prompt
 
 ### UI/UX Improvements
 - Mobile-first responsive design with bottom navigation
@@ -124,3 +129,10 @@ The application follows a full-stack architecture with a React frontend, Express
 - Club management with in-bag status tracking
 - Performance charts using Recharts library
 - Consistent golf-themed color scheme throughout
+- Admin interface for dynamic prompt configuration
+
+### Technical Updates
+- **Database Schema**: Migrated to Replit Auth user model with proper session handling
+- **Prompt Configuration**: AI prompts now stored in database and can be updated by admins
+- **User Isolation**: Complete data isolation ensuring users only see their own data
+- **Admin Role**: Admin users can dynamically update Gemini prompts for better analysis results

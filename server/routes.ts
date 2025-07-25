@@ -336,6 +336,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin routes (require admin role)
+  app.get('/api/admin/prompts', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      
+      const prompts = await storage.getAllPromptConfigurations();
+      res.json(prompts);
+    } catch (error) {
+      console.error("Error fetching prompts:", error);
+      res.status(500).json({ message: "Failed to fetch prompts" });
+    }
+  });
+
+  app.post('/api/admin/prompts', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      
+      const { name, prompt } = req.body;
+      const newPrompt = await storage.createPromptConfiguration({
+        name,
+        prompt,
+        isActive: false,
+        updatedBy: user.id,
+      });
+      res.json(newPrompt);
+    } catch (error) {
+      console.error("Error creating prompt:", error);
+      res.status(500).json({ message: "Failed to create prompt" });
+    }
+  });
+
+  app.patch('/api/admin/prompts/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      
+      const { prompt } = req.body;
+      const updated = await storage.updatePromptConfiguration(req.params.id, {
+        prompt,
+        updatedBy: user.id,
+      });
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating prompt:", error);
+      res.status(500).json({ message: "Failed to update prompt" });
+    }
+  });
+
+  app.post('/api/admin/prompts/:id/activate', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      
+      await storage.setActivePromptConfiguration(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error activating prompt:", error);
+      res.status(500).json({ message: "Failed to activate prompt" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

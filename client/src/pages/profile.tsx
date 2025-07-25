@@ -10,8 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { User, Plus, Edit2, Trash2, Save, X, Activity } from "lucide-react";
+import { User, Plus, Edit2, Trash2, Save, X, Activity, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import type { Club, UserPreferences } from "@shared/schema";
 
@@ -28,6 +29,7 @@ interface ClubFormData {
 export default function Profile() {
   const { toast } = useToast();
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
   // User ID now comes from authentication
   const [editingClub, setEditingClub] = useState<Club | null>(null);
   const [showAddClub, setShowAddClub] = useState(false);
@@ -207,6 +209,17 @@ export default function Profile() {
                   <Label className="text-sm text-slate-600">Member Since</Label>
                   <p className="font-medium">January 2025</p>
                 </div>
+                {(user as any)?.isAdmin && (
+                  <div className="pt-2 border-t">
+                    <Button 
+                      className="w-full"
+                      onClick={() => setLocation('/admin')}
+                    >
+                      <Settings className="h-4 w-4 mr-2" />
+                      Admin Settings
+                    </Button>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

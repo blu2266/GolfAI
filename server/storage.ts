@@ -3,6 +3,7 @@ import {
   swingAnalyses, 
   clubs, 
   userPreferences,
+  promptConfigurations,
   type User, 
   type UpsertUser, 
   type SwingAnalysis, 
@@ -10,7 +11,9 @@ import {
   type Club,
   type InsertClub,
   type UserPreferences,
-  type InsertUserPreferences
+  type InsertUserPreferences,
+  type PromptConfiguration,
+  type InsertPromptConfiguration
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc } from "drizzle-orm";
@@ -38,6 +41,13 @@ export interface IStorage {
   // User preferences
   getUserPreferences(userId: string): Promise<UserPreferences | undefined>;
   updateUserPreferences(userId: string, prefs: Partial<InsertUserPreferences>): Promise<UserPreferences>;
+  
+  // Prompt configurations (admin only)
+  getActivePromptConfiguration(): Promise<PromptConfiguration | undefined>;
+  getAllPromptConfigurations(): Promise<PromptConfiguration[]>;
+  createPromptConfiguration(config: InsertPromptConfiguration): Promise<PromptConfiguration>;
+  updatePromptConfiguration(id: string, updates: Partial<PromptConfiguration>): Promise<PromptConfiguration | undefined>;
+  setActivePromptConfiguration(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -188,6 +198,56 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return created;
     }
+  }
+  
+  // Prompt configurations
+  async getActivePromptConfiguration(): Promise<PromptConfiguration | undefined> {
+    const [config] = await db
+      .select()
+      .from(promptConfigurations)
+      .where(eq(promptConfigurations.isActive, true))
+      .limit(1);
+    return config;
+  }
+  
+  async getAllPromptConfigurations(): Promise<PromptConfiguration[]> {
+    return await db
+      .select()
+      .from(promptConfigurations)
+      .orderBy(desc(promptConfigurations.createdAt));
+  }
+  
+  async createPromptConfiguration(config: InsertPromptConfiguration): Promise<PromptConfiguration> {
+    const [newConfig] = await db
+      .insert(promptConfigurations)
+      .values([config])
+      .returning();
+    return newConfig;
+  }
+  
+  async updatePromptConfiguration(id: string, updates: Partial<PromptConfiguration>): Promise<PromptConfiguration | undefined> {
+    const [updated] = await db
+      .update(promptConfigurations)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(promptConfigurations.id, id))
+      .returning();
+    return updated;
+  }
+  
+  async setActivePromptConfiguration(id: string): Promise<void> {
+    // First, deactivate all configurations
+    await db
+      .update(promptConfigurations)
+      .set({ isActive: false });
+    
+    // Then activate the selected one
+    await db
+      .update(promptConfigurations)
+      .set({ isActive: true })
+      .where(eq(promptConfigurations.id, id));
   }
 }
 

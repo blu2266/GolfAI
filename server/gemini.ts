@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import { GoogleGenAI } from "@google/genai";
+import { storage } from "./storage";
 
 // the newest Gemini model series is "gemini-2.5-flash" or gemini-2.5-pro"
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
@@ -30,15 +31,10 @@ export async function analyzeGolfSwing(videoPath: string): Promise<{
 }> {
   try {
     const videoBytes = fs.readFileSync(videoPath);
-
-    const contents = [
-      {
-        inlineData: {
-          data: videoBytes.toString("base64"),
-          mimeType: "video/mp4",
-        },
-      },
-      `You are a professional golf instructor and swing analyst. Analyze this golf swing video and provide detailed feedback in JSON format.
+    
+    // Get the active prompt configuration
+    const promptConfig = await storage.getActivePromptConfiguration();
+    const systemPrompt = promptConfig?.prompt || `You are a professional golf instructor and swing analyst. Analyze this golf swing video and provide detailed feedback in JSON format.
 
       Analyze these key aspects:
       1. Backswing mechanics (shoulder turn, club position, balance)
@@ -46,7 +42,9 @@ export async function analyzeGolfSwing(videoPath: string): Promise<{
       3. Impact position (club face, body position, ball contact)
       4. Follow-through (extension, balance, finish position)
 
-      Provide scores from 1-10 for each phase and overall. Include specific, actionable recommendations.
+      Provide scores from 1-10 for each phase and overall. Include specific, actionable recommendations.`;
+      
+    const jsonStructurePrompt = `
 
       Return JSON with this exact structure:
       {
@@ -78,7 +76,16 @@ export async function analyzeGolfSwing(videoPath: string): Promise<{
             "category": "string"
           }
         ]
-      }`,
+      }`;
+    
+    const contents = [
+      {
+        inlineData: {
+          data: videoBytes.toString("base64"),
+          mimeType: "video/mp4",
+        },
+      },
+      systemPrompt + jsonStructurePrompt,
     ];
 
     const response = await ai.models.generateContent({
