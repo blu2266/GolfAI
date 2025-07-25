@@ -65,7 +65,10 @@ export default function Analysis() {
 
       {/* Analysis Content */}
       <main className="max-w-md mx-auto pb-6">
-        <AnalysisResults analysis={analysis} />
+        <AnalysisResults 
+          analysisId={analysisId!} 
+          onBack={() => setLocation("/history")} 
+        />
       </main>
     </div>
   );
