@@ -10,6 +10,7 @@ import Progress from "@/pages/progress";
 import Profile from "@/pages/profile";
 import Landing from "@/pages/landing";
 import Admin from "@/pages/admin";
+import Analysis from "@/pages/analysis";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -34,7 +35,7 @@ function Router() {
           <Route path="/progress" component={Progress} />
           <Route path="/profile" component={Profile} />
           <Route path="/admin" component={Admin} />
-          <Route path="/analysis/:id" component={Home} />
+          <Route path="/analysis/:id" component={Analysis} />
         </>
       )}
       <Route component={NotFound} />
