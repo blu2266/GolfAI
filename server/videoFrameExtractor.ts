@@ -28,7 +28,17 @@ function parseTimestamp(timestamp: string): number {
 }
 
 function parseTimeToSeconds(timeStr: string): number {
-  const parts = timeStr.split(':');
+  // Remove 's' suffix if present and trim whitespace
+  const cleanTime = timeStr.trim().replace(/s$/i, '');
+  
+  // Check if it's already just a number (seconds)
+  const directSeconds = parseFloat(cleanTime);
+  if (!isNaN(directSeconds)) {
+    return directSeconds;
+  }
+  
+  // Parse HH:MM:SS or MM:SS format
+  const parts = cleanTime.split(':');
   if (parts.length === 2) {
     return parseInt(parts[0]) * 60 + parseInt(parts[1]);
   } else if (parts.length === 3) {
@@ -55,6 +65,7 @@ export async function extractFramesFromVideo(
 
   for (const phase of swingPhases) {
     const timestamp = parseTimestamp(phase.timestamp);
+    console.log(`Extracting frame for ${phase.name} at ${timestamp}s from timestamp: ${phase.timestamp}`);
     const frameName = `${phase.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}.jpg`;
     const framePath = path.join(framesDir, frameName);
     

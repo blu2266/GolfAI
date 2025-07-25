@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { VideoPlayer } from "@/components/video-player";
-
+import { ImageModal } from "@/components/ui/image-modal";
 import { ArrowLeft, Star, TrendingUp, Lightbulb, ArrowRight, Target, Save, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { SwingAnalysis, Club } from "@shared/schema";
@@ -24,6 +24,7 @@ export function AnalysisResults({ analysisId, onBack }: AnalysisResultsProps) {
   const [showSaveForm, setShowSaveForm] = useState(false);
   const [saveNotes, setSaveNotes] = useState("");
   const [selectedClubId, setSelectedClubId] = useState<string>("");
+  const [expandedImage, setExpandedImage] = useState<{ src: string; alt: string } | null>(null);
   
   const { data: analysis, isLoading, error } = useQuery<SwingAnalysis>({
     queryKey: ["/api/swing-analyses", analysisId],
@@ -248,7 +249,11 @@ export function AnalysisResults({ analysisId, onBack }: AnalysisResultsProps) {
                         <img 
                           src={`/api/frames/${analysis.id}/${phase.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}.jpg`}
                           alt={`${phase.name} frame`}
-                          className="w-24 h-16 rounded-lg object-cover shadow-sm bg-slate-200"
+                          className="w-24 h-16 rounded-lg object-cover shadow-sm bg-slate-200 cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={() => setExpandedImage({ 
+                            src: `/api/frames/${analysis.id}/${phase.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}.jpg`,
+                            alt: `${phase.name} frame`
+                          })}
                           onError={(e) => {
                             // Fallback to gray placeholder if frame not found
                             e.currentTarget.style.display = 'none';
@@ -401,6 +406,16 @@ export function AnalysisResults({ analysisId, onBack }: AnalysisResultsProps) {
           </CardContent>
         </Card>
       </div>
+
+      {/* Image Modal */}
+      {expandedImage && (
+        <ImageModal
+          isOpen={!!expandedImage}
+          onClose={() => setExpandedImage(null)}
+          src={expandedImage.src}
+          alt={expandedImage.alt}
+        />
+      )}
     </div>
   );
 }
