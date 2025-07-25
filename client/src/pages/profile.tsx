@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { User, Plus, Edit2, Trash2, Save, X, Activity } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -356,6 +356,9 @@ export default function Profile() {
             <DialogTitle>
               {editingClub ? "Edit Club" : "Add New Club"}
             </DialogTitle>
+            <DialogDescription>
+              {editingClub ? "Update your club details." : "Add a new club to your golf bag."}
+            </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">
@@ -457,7 +460,7 @@ export default function Profile() {
             </Button>
             <Button
               onClick={editingClub ? handleUpdateClub : handleAddClub}
-              disabled={!clubForm.name || !clubForm.brand}
+              disabled={!clubForm.name || !clubForm.type}
             >
               {editingClub ? "Update" : "Add"} Club
             </Button>
