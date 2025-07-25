@@ -78,6 +78,7 @@ export default function Profile() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
+        credentials: "include",
       });
       if (!response.ok) throw new Error("Failed to update club");
       return response.json();
@@ -97,6 +98,7 @@ export default function Profile() {
     mutationFn: async (id: string) => {
       const response = await fetch(`/api/clubs/${id}`, {
         method: "DELETE",
+        credentials: "include",
       });
       if (!response.ok) throw new Error("Failed to delete club");
       return response.json();
@@ -116,6 +118,7 @@ export default function Profile() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
+        credentials: "include",
       });
       if (!response.ok) throw new Error("Failed to update preferences");
       return response.json();

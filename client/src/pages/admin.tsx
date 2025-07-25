@@ -34,7 +34,7 @@ export default function Admin() {
 
   const updatePromptMutation = useMutation({
     mutationFn: async ({ id, prompt }: { id: string; prompt: string }) => {
-      await apiRequest(`/api/admin/prompts/${id}`, "PATCH", { prompt });
+      await apiRequest("PATCH", `/api/admin/prompts/${id}`, { prompt });
     },
     onSuccess: () => {
       toast({
@@ -54,7 +54,7 @@ export default function Admin() {
 
   const createPromptMutation = useMutation({
     mutationFn: async ({ name, prompt }: { name: string; prompt: string }) => {
-      await apiRequest("/api/admin/prompts", "POST", { name, prompt });
+      await apiRequest("POST", "/api/admin/prompts", { name, prompt });
     },
     onSuccess: () => {
       toast({
@@ -77,7 +77,7 @@ export default function Admin() {
 
   const activatePromptMutation = useMutation({
     mutationFn: async (id: string) => {
-      await apiRequest(`/api/admin/prompts/${id}/activate`, "POST");
+      await apiRequest("POST", `/api/admin/prompts/${id}/activate`);
     },
     onSuccess: () => {
       toast({
