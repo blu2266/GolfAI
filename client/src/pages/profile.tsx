@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Badge } from "@/components/ui/badge";
 import { User, Plus, Edit2, Trash2, Save, X, Activity } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import type { Club, UserPreferences } from "@shared/schema";
 
 interface ClubFormData {
@@ -26,7 +27,8 @@ interface ClubFormData {
 
 export default function Profile() {
   const { toast } = useToast();
-  const userId = "temp-user"; // TODO: Get from auth context
+  const { user } = useAuth();
+  // User ID now comes from authentication
   const [editingClub, setEditingClub] = useState<Club | null>(null);
   const [showAddClub, setShowAddClub] = useState(false);
   const [clubForm, setClubForm] = useState<ClubFormData>({
@@ -39,11 +41,11 @@ export default function Profile() {
 
   // Queries
   const { data: clubs, isLoading: clubsLoading } = useQuery<Club[]>({
-    queryKey: [`/api/clubs/${userId}`],
+    queryKey: [`/api/clubs`],
   });
 
   const { data: preferences } = useQuery<UserPreferences>({
-    queryKey: [`/api/preferences/${userId}`],
+    queryKey: [`/api/preferences`],
   });
 
   // Mutations
@@ -52,13 +54,13 @@ export default function Profile() {
       const response = await fetch("/api/clubs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, userId }),
+        body: JSON.stringify(data),
       });
       if (!response.ok) throw new Error("Failed to create club");
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/clubs/${userId}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/clubs`] });
       setShowAddClub(false);
       resetClubForm();
       toast({
@@ -79,7 +81,7 @@ export default function Profile() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/clubs/${userId}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/clubs`] });
       setEditingClub(null);
       resetClubForm();
       toast({
@@ -98,7 +100,7 @@ export default function Profile() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/clubs/${userId}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/clubs`] });
       toast({
         title: "Club removed",
         description: "The club has been removed from your bag.",
@@ -108,7 +110,7 @@ export default function Profile() {
 
   const updatePreferencesMutation = useMutation({
     mutationFn: async (data: Partial<UserPreferences>) => {
-      const response = await fetch(`/api/preferences/${userId}`, {
+      const response = await fetch(`/api/preferences`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -117,7 +119,7 @@ export default function Profile() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/preferences/${userId}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/preferences`] });
       toast({
         title: "Settings saved",
         description: "Your preferences have been updated.",
@@ -198,8 +200,8 @@ export default function Profile() {
             <CardContent>
               <div className="space-y-3">
                 <div>
-                  <Label className="text-sm text-slate-600">Username</Label>
-                  <p className="font-medium">{userId}</p>
+                  <Label className="text-sm text-slate-600">Email</Label>
+                  <p className="font-medium">{user?.email || "Loading..."}</p>
                 </div>
                 <div>
                   <Label className="text-sm text-slate-600">Member Since</Label>

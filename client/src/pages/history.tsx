@@ -12,14 +12,12 @@ import type { SwingAnalysis, Club } from "@shared/schema";
 export default function History() {
   const [location, setLocation] = useLocation();
   const [filterClub, setFilterClub] = useState<string>("all");
-  const userId = "temp-user"; // TODO: Get from auth context
-
   const { data: savedAnalyses, isLoading: analysesLoading } = useQuery<SwingAnalysis[]>({
-    queryKey: [`/api/swing-analyses/saved/${userId}`],
+    queryKey: [`/api/swing-analyses/saved`],
   });
 
   const { data: clubs } = useQuery<Club[]>({
-    queryKey: [`/api/clubs/${userId}`],
+    queryKey: [`/api/clubs`],
   });
 
   const filteredAnalyses = savedAnalyses?.filter(analysis => 

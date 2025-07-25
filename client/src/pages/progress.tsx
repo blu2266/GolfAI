@@ -11,14 +11,13 @@ import type { SwingAnalysis, Club } from "@shared/schema";
 export default function Progress() {
   const [timeRange, setTimeRange] = useState<string>("30");
   const [selectedClub, setSelectedClub] = useState<string>("all");
-  const userId = "temp-user"; // TODO: Get from auth context
 
   const { data: savedAnalyses, isLoading } = useQuery<SwingAnalysis[]>({
-    queryKey: [`/api/swing-analyses/saved/${userId}`],
+    queryKey: [`/api/swing-analyses/saved`],
   });
 
   const { data: clubs } = useQuery<Club[]>({
-    queryKey: [`/api/clubs/${userId}`],
+    queryKey: [`/api/clubs`],
   });
 
   // Filter analyses by time range and club

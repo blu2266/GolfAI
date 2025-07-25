@@ -4,7 +4,8 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { storage } from "./storage";
-import { insertSwingAnalysisSchema } from "@shared/schema";
+import { setupAuth, isAuthenticated } from "./replitAuth";
+import { insertSwingAnalysisSchema, insertClubSchema, insertUserPreferencesSchema } from "@shared/schema";
 import { analyzeGolfSwing } from "./gemini";
 
 const upload = multer({
@@ -26,10 +27,26 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Get recent swing analyses
-  app.get("/api/swing-analyses", async (req, res) => {
+  // Setup authentication
+  await setupAuth(app);
+
+  // Auth routes
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const analyses = await storage.getRecentSwingAnalyses();
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // Get recent swing analyses (protected)
+  app.get("/api/swing-analyses", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const analyses = await storage.getUserSwingAnalyses(userId);
       res.json(analyses);
     } catch (error) {
       console.error("Error fetching swing analyses:", error);
@@ -37,11 +54,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get specific swing analysis
-  app.get("/api/swing-analyses/:id", async (req, res) => {
+  // Get specific swing analysis (protected)
+  app.get("/api/swing-analyses/:id", isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
       const analysis = await storage.getSwingAnalysis(req.params.id);
-      if (!analysis) {
+      if (!analysis || analysis.userId !== userId) {
         return res.status(404).json({ message: "Analysis not found" });
       }
       res.json(analysis);
@@ -51,14 +69,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Upload and analyze video
-  app.post("/api/analyze-swing", upload.single("video"), async (req, res) => {
+  // Upload and analyze video (protected)
+  app.post("/api/analyze-swing", isAuthenticated, upload.single("video"), async (req: any, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "No video file provided" });
       }
 
-      const { title, userId } = req.body;
+      const { title } = req.body;
+      const userId = req.user.claims.sub; // Get authenticated user ID
       
       if (!title) {
         return res.status(400).json({ message: "Title is required" });
@@ -72,7 +91,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create analysis record
       const analysisData = {
-        userId: userId || "temp-user", // Default to temp-user
+        userId,
         videoPath: videoPath,
         title,
         ...analysisResult
@@ -213,8 +232,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Save/unsave an analysis
-  app.patch("/api/swing-analyses/:id/save", async (req, res) => {
+  // Save/unsave an analysis (protected)
+  app.patch("/api/swing-analyses/:id/save", isAuthenticated, async (req: any, res) => {
     try {
       const { isSaved, notes, clubId } = req.body;
       const analysis = await storage.updateSwingAnalysis(req.params.id, {
@@ -232,10 +251,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get saved analyses for the current user
-  app.get("/api/swing-analyses/saved/:userId", async (req, res) => {
+  // Get saved analyses for the current user (protected)
+  app.get("/api/swing-analyses/saved", isAuthenticated, async (req: any, res) => {
     try {
-      const analyses = await storage.getSavedSwingAnalysesByUser(req.params.userId);
+      const userId = req.user.claims.sub;
+      const analyses = await storage.getSavedSwingAnalysesByUser(userId);
       res.json(analyses);
     } catch (error) {
       console.error("Error fetching saved analyses:", error);
@@ -243,10 +263,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Club management
-  app.get("/api/clubs/:userId", async (req, res) => {
+  // Club management (protected)
+  app.get("/api/clubs", isAuthenticated, async (req: any, res) => {
     try {
-      const clubs = await storage.getClubsByUser(req.params.userId);
+      const userId = req.user.claims.sub;
+      const clubs = await storage.getClubsByUser(userId);
       res.json(clubs);
     } catch (error) {
       console.error("Error fetching clubs:", error);
@@ -254,9 +275,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/clubs", async (req, res) => {
+  app.post("/api/clubs", isAuthenticated, async (req: any, res) => {
     try {
-      const club = await storage.createClub(req.body);
+      const userId = req.user.claims.sub;
+      const clubData = { ...req.body, userId };
+      const club = await storage.createClub(clubData);
       res.json(club);
     } catch (error) {
       console.error("Error creating club:", error);
@@ -264,7 +287,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/clubs/:id", async (req, res) => {
+  app.patch("/api/clubs/:id", isAuthenticated, async (req: any, res) => {
     try {
       const club = await storage.updateClub(req.params.id, req.body);
       if (!club) {
@@ -277,7 +300,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/clubs/:id", async (req, res) => {
+  app.delete("/api/clubs/:id", isAuthenticated, async (req: any, res) => {
     try {
       const deleted = await storage.deleteClub(req.params.id);
       if (!deleted) {
@@ -290,10 +313,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // User preferences
-  app.get("/api/preferences/:userId", async (req, res) => {
+  // User preferences (protected)
+  app.get("/api/preferences", isAuthenticated, async (req: any, res) => {
     try {
-      const prefs = await storage.getUserPreferences(req.params.userId);
+      const userId = req.user.claims.sub;
+      const prefs = await storage.getUserPreferences(userId);
       res.json(prefs || {});
     } catch (error) {
       console.error("Error fetching preferences:", error);
@@ -301,9 +325,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/preferences/:userId", async (req, res) => {
+  app.put("/api/preferences", isAuthenticated, async (req: any, res) => {
     try {
-      const prefs = await storage.updateUserPreferences(req.params.userId, req.body);
+      const userId = req.user.claims.sub;
+      const prefs = await storage.updateUserPreferences(userId, req.body);
       res.json(prefs);
     } catch (error) {
       console.error("Error updating preferences:", error);
