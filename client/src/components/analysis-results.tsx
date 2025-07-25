@@ -1,11 +1,17 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { VideoPlayer } from "@/components/video-player";
 import { VideoFrameExtractor } from "@/components/video-frame-extractor";
-import { ArrowLeft, Star, TrendingUp, Lightbulb, ArrowRight, Target } from "lucide-react";
-import type { SwingAnalysis } from "@shared/schema";
+import { ArrowLeft, Star, TrendingUp, Lightbulb, ArrowRight, Target, Save, X } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import type { SwingAnalysis, Club } from "@shared/schema";
 
 interface AnalysisResultsProps {
   analysisId: string;
@@ -13,8 +19,38 @@ interface AnalysisResultsProps {
 }
 
 export function AnalysisResults({ analysisId, onBack }: AnalysisResultsProps) {
+  const { toast } = useToast();
+  const userId = "temp-user"; // TODO: Get from auth context
+  const [showSaveForm, setShowSaveForm] = useState(false);
+  const [saveNotes, setSaveNotes] = useState("");
+  const [selectedClubId, setSelectedClubId] = useState<string>("");
+  
   const { data: analysis, isLoading, error } = useQuery<SwingAnalysis>({
     queryKey: ["/api/swing-analyses", analysisId],
+  });
+  
+  const { data: clubs } = useQuery<Club[]>({
+    queryKey: [`/api/clubs/${userId}`],
+  });
+  
+  const saveMutation = useMutation({
+    mutationFn: async (data: { isSaved: boolean; notes?: string; clubId?: string }) => {
+      const response = await fetch(`/api/swing-analyses/${analysisId}/save`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error("Failed to save analysis");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/swing-analyses", analysisId] });
+      setShowSaveForm(false);
+      toast({
+        title: analysis?.isSaved ? "Analysis unsaved" : "Analysis saved",
+        description: analysis?.isSaved ? "Removed from your history" : "Added to your history for tracking",
+      });
+    },
   });
 
   if (isLoading) {
@@ -106,7 +142,91 @@ export function AnalysisResults({ analysisId, onBack }: AnalysisResultsProps) {
                   <div className="text-xs">Overall</div>
                 </div>
               </div>
-              <p className="text-sm text-slate-600">{analysis.overallFeedback}</p>
+              <p className="text-sm text-slate-600 mb-4">{analysis.overallFeedback}</p>
+              
+              {/* Save Analysis Button */}
+              {!showSaveForm && (
+                <Button
+                  onClick={() => {
+                    if (analysis.isSaved) {
+                      saveMutation.mutate({ isSaved: false });
+                    } else {
+                      setShowSaveForm(true);
+                    }
+                  }}
+                  variant={analysis.isSaved ? "outline" : "default"}
+                  className="mt-4"
+                >
+                  {analysis.isSaved ? (
+                    <>
+                      <X className="w-4 h-4 mr-2" />
+                      Remove from History
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Save Analysis
+                    </>
+                  )}
+                </Button>
+              )}
+              
+              {/* Save Form */}
+              {showSaveForm && (
+                <div className="mt-4 text-left space-y-3 border-t pt-4">
+                  <div>
+                    <Label htmlFor="club-select">Club Used</Label>
+                    <Select value={selectedClubId} onValueChange={setSelectedClubId}>
+                      <SelectTrigger id="club-select">
+                        <SelectValue placeholder="Select a club" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {clubs?.map((club) => (
+                          <SelectItem key={club.id} value={club.id}>
+                            {club.name} ({club.type})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="notes">Notes (optional)</Label>
+                    <Textarea
+                      id="notes"
+                      placeholder="Add any notes about this swing..."
+                      value={saveNotes}
+                      onChange={(e) => setSaveNotes(e.target.value)}
+                      className="h-20"
+                    />
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => {
+                        saveMutation.mutate({
+                          isSaved: true,
+                          notes: saveNotes,
+                          clubId: selectedClubId || undefined
+                        });
+                      }}
+                      disabled={!selectedClubId}
+                    >
+                      Save to History
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setShowSaveForm(false);
+                        setSaveNotes("");
+                        setSelectedClubId("");
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

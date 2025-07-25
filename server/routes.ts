@@ -213,6 +213,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Save/unsave an analysis
+  app.patch("/api/swing-analyses/:id/save", async (req, res) => {
+    try {
+      const { isSaved, notes, clubId } = req.body;
+      const analysis = await storage.updateSwingAnalysis(req.params.id, {
+        isSaved,
+        notes,
+        clubId
+      });
+      if (!analysis) {
+        return res.status(404).json({ message: "Analysis not found" });
+      }
+      res.json(analysis);
+    } catch (error) {
+      console.error("Error updating analysis:", error);
+      res.status(500).json({ message: "Failed to update analysis" });
+    }
+  });
+
+  // Get saved analyses for the current user
+  app.get("/api/swing-analyses/saved/:userId", async (req, res) => {
+    try {
+      const analyses = await storage.getSavedSwingAnalysesByUser(req.params.userId);
+      res.json(analyses);
+    } catch (error) {
+      console.error("Error fetching saved analyses:", error);
+      res.status(500).json({ message: "Failed to fetch saved analyses" });
+    }
+  });
+
+  // Club management
+  app.get("/api/clubs/:userId", async (req, res) => {
+    try {
+      const clubs = await storage.getClubsByUser(req.params.userId);
+      res.json(clubs);
+    } catch (error) {
+      console.error("Error fetching clubs:", error);
+      res.status(500).json({ message: "Failed to fetch clubs" });
+    }
+  });
+
+  app.post("/api/clubs", async (req, res) => {
+    try {
+      const club = await storage.createClub(req.body);
+      res.json(club);
+    } catch (error) {
+      console.error("Error creating club:", error);
+      res.status(500).json({ message: "Failed to create club" });
+    }
+  });
+
+  app.patch("/api/clubs/:id", async (req, res) => {
+    try {
+      const club = await storage.updateClub(req.params.id, req.body);
+      if (!club) {
+        return res.status(404).json({ message: "Club not found" });
+      }
+      res.json(club);
+    } catch (error) {
+      console.error("Error updating club:", error);
+      res.status(500).json({ message: "Failed to update club" });
+    }
+  });
+
+  app.delete("/api/clubs/:id", async (req, res) => {
+    try {
+      const deleted = await storage.deleteClub(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Club not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting club:", error);
+      res.status(500).json({ message: "Failed to delete club" });
+    }
+  });
+
+  // User preferences
+  app.get("/api/preferences/:userId", async (req, res) => {
+    try {
+      const prefs = await storage.getUserPreferences(req.params.userId);
+      res.json(prefs || {});
+    } catch (error) {
+      console.error("Error fetching preferences:", error);
+      res.status(500).json({ message: "Failed to fetch preferences" });
+    }
+  });
+
+  app.put("/api/preferences/:userId", async (req, res) => {
+    try {
+      const prefs = await storage.updateUserPreferences(req.params.userId, req.body);
+      res.json(prefs);
+    } catch (error) {
+      console.error("Error updating preferences:", error);
+      res.status(500).json({ message: "Failed to update preferences" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

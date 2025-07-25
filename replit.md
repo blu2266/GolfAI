@@ -41,6 +41,14 @@ The application follows a full-stack architecture with a React frontend, Express
   - Swing phases with scores and feedback
   - Key metrics with performance indicators
   - Recommendations categorized by priority and impact
+  - Added isSaved, clubId, and notes fields for saved analyses
+- **Clubs Table**: Stores golf club information:
+  - Club details (name, type, brand, model, loft, shaft)
+  - Active status tracking for in-bag management
+- **User Preferences Table**: Stores user settings:
+  - Units preference (yards/meters)
+  - Handicap
+  - Default club selection
 - **ORM**: Drizzle ORM with PostgreSQL dialect
 - **Migrations**: Drizzle Kit for schema migrations
 
@@ -89,3 +97,30 @@ The application follows a full-stack architecture with a React frontend, Express
 4. **AI-Powered Analysis**: Google Gemini 2.5-Pro provides sophisticated multimodal video swing analysis
 5. **Type Safety**: Full TypeScript implementation ensures runtime safety and better developer experience
 6. **Component-Based UI**: shadcn/ui provides accessible, customizable components with consistent design
+
+## Recent Changes (January 2025)
+
+### Major Feature Expansion
+- **Save Analyses**: Added ability to save analyses to personal history with club assignment and notes
+- **Club Management**: Full CRUD operations for managing golf clubs in user's bag
+- **Progress Tracking**: Performance trends visualization with charts showing improvement over time
+- **User Profiles**: Settings management and preferences (units, handicap)
+- **Enhanced Navigation**: Bottom navigation bar with proper routing between pages
+
+### New Pages Added
+- `/history` - View saved swing analyses filtered by club
+- `/progress` - Performance metrics and trends over time
+- `/profile` - User settings and golf bag management
+
+### New API Endpoints
+- `PATCH /api/swing-analyses/:id/save` - Save/unsave analysis
+- `GET /api/swing-analyses/saved/:userId` - Get saved analyses
+- `GET/POST/PATCH/DELETE /api/clubs` - Club management
+- `GET/PUT /api/preferences/:userId` - User preferences
+
+### UI/UX Improvements
+- Mobile-first responsive design with bottom navigation
+- Save functionality with club selection and notes
+- Club management with in-bag status tracking
+- Performance charts using Recharts library
+- Consistent golf-themed color scheme throughout
