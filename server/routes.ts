@@ -55,7 +55,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get specific swing analysis (protected)
+  // Get saved analyses for the current user (protected) - MUST BE BEFORE :id route
+  app.get("/api/swing-analyses/saved", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const analyses = await storage.getSavedSwingAnalysesByUser(userId);
+      res.json(analyses);
+    } catch (error) {
+      console.error("Error fetching saved analyses:", error);
+      res.status(500).json({ message: "Failed to fetch saved analyses" });
+    }
+  });
+
+  // Get specific swing analysis (protected) - MUST BE AFTER /saved route
   app.get("/api/swing-analyses/:id", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
@@ -271,17 +283,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get saved analyses for the current user (protected)
-  app.get("/api/swing-analyses/saved", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const analyses = await storage.getSavedSwingAnalysesByUser(userId);
-      res.json(analyses);
-    } catch (error) {
-      console.error("Error fetching saved analyses:", error);
-      res.status(500).json({ message: "Failed to fetch saved analyses" });
-    }
-  });
+
 
   // Club management (protected)
   app.get("/api/clubs", isAuthenticated, async (req: any, res) => {
