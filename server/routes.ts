@@ -5,7 +5,7 @@ import path from "path";
 import fs from "fs";
 import { storage } from "./storage";
 import { insertSwingAnalysisSchema } from "@shared/schema";
-import { analyzeGolfSwing } from "./openai";
+import { analyzeGolfSwing } from "./gemini";
 
 const upload = multer({
   dest: "uploads/",
@@ -64,13 +64,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Title is required" });
       }
 
-      // Read video file and convert to base64
+      // Get video file path for Gemini analysis
       const videoPath = req.file.path;
-      const videoBuffer = fs.readFileSync(videoPath);
-      const base64Video = videoBuffer.toString("base64");
 
-      // Analyze with OpenAI
-      const analysisResult = await analyzeGolfSwing(base64Video);
+      // Analyze with Gemini
+      const analysisResult = await analyzeGolfSwing(videoPath);
 
       // Create analysis record
       const analysisData = {

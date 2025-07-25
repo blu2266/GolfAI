@@ -32,7 +32,7 @@ The application follows a full-stack architecture with a React frontend, Express
 - **Framework**: Express.js with TypeScript
 - **API Structure**: RESTful API endpoints for swing analysis operations
 - **File Upload**: Multer middleware for handling video file uploads (MP4, MOV, AVI)
-- **AI Integration**: OpenAI GPT-4o for swing analysis
+- **AI Integration**: Google Gemini 2.5-Pro for video swing analysis
 - **Error Handling**: Centralized error handling middleware
 
 ### Database Schema
@@ -48,7 +48,7 @@ The application follows a full-stack architecture with a React frontend, Express
 
 1. **Video Upload**: Users upload golf swing videos through the frontend
 2. **File Processing**: Backend receives and validates video files using Multer
-3. **AI Analysis**: Videos are converted to base64 and sent to OpenAI GPT-4o for analysis
+3. **AI Analysis**: Videos are sent directly to Google Gemini 2.5-Pro for multimodal analysis
 4. **Data Storage**: Analysis results are stored in PostgreSQL database
 5. **Results Display**: Frontend fetches and displays detailed analysis results
 
@@ -57,7 +57,7 @@ The application follows a full-stack architecture with a React frontend, Express
 ### Core Dependencies
 - **@neondatabase/serverless**: Neon PostgreSQL database connection
 - **drizzle-orm**: Type-safe database ORM
-- **openai**: OpenAI API client for GPT-4o integration
+- **@google/genai**: Google Gemini API client for video analysis
 - **multer**: File upload handling
 - **@tanstack/react-query**: Server state management
 - **@radix-ui/**: Accessible UI component primitives
@@ -79,13 +79,13 @@ The application follows a full-stack architecture with a React frontend, Express
 - **Development**: Uses tsx for TypeScript execution
 - **Production**: Runs compiled JavaScript bundle
 - **Database**: Requires `DATABASE_URL` environment variable
-- **AI Integration**: Requires `OPENAI_API_KEY` environment variable
+- **AI Integration**: Requires `GEMINI_API_KEY` environment variable
 
 ### Key Architectural Decisions
 
 1. **Monorepo Structure**: Chosen for code sharing between frontend and backend, with shared types and schemas
 2. **In-Memory Storage Fallback**: MemStorage class provides development fallback when database is unavailable
 3. **Mobile-First Design**: Golf applications benefit from mobile usage on the course
-4. **AI-Powered Analysis**: GPT-4o provides sophisticated swing analysis beyond basic computer vision
+4. **AI-Powered Analysis**: Google Gemini 2.5-Pro provides sophisticated multimodal video swing analysis
 5. **Type Safety**: Full TypeScript implementation ensures runtime safety and better developer experience
 6. **Component-Based UI**: shadcn/ui provides accessible, customizable components with consistent design

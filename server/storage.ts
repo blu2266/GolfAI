@@ -46,9 +46,9 @@ export class MemStorage implements IStorage {
       title: insertAnalysis.title,
       overallScore: insertAnalysis.overallScore,
       overallFeedback: insertAnalysis.overallFeedback,
-      swingPhases: insertAnalysis.swingPhases,
-      keyMetrics: insertAnalysis.keyMetrics,
-      recommendations: insertAnalysis.recommendations,
+      swingPhases: insertAnalysis.swingPhases as any,
+      keyMetrics: insertAnalysis.keyMetrics as any,
+      recommendations: insertAnalysis.recommendations as any,
       createdAt: new Date(),
     };
     this.swingAnalyses.set(id, analysis);
