@@ -201,7 +201,7 @@ export default function Profile() {
               <div className="space-y-3">
                 <div>
                   <Label className="text-sm text-slate-600">Email</Label>
-                  <p className="font-medium">{user?.email || "Loading..."}</p>
+                  <p className="font-medium">{(user as any)?.email || "Loading..."}</p>
                 </div>
                 <div>
                   <Label className="text-sm text-slate-600">Member Since</Label>
