@@ -14,36 +14,47 @@ const access = promisify(fs.access);
 
 // Parse timestamp like "00:00 - 00:01" and get middle point
 function parseTimestamp(timestamp: string): number {
+  console.log(`Parsing timestamp: "${timestamp}"`);
   const parts = timestamp.split(' - ');
   if (parts.length !== 2) {
     // If it's a single timestamp like "00:00", use that
-    return parseTimeToSeconds(timestamp);
+    const result = parseTimeToSeconds(timestamp);
+    console.log(`Single timestamp parsed to: ${result}s`);
+    return result;
   }
   
   const startSeconds = parseTimeToSeconds(parts[0]);
   const endSeconds = parseTimeToSeconds(parts[1]);
+  const midpoint = (startSeconds + endSeconds) / 2;
   
-  // Return middle point
-  return (startSeconds + endSeconds) / 2;
+  console.log(`Range timestamp: start=${startSeconds}s, end=${endSeconds}s, midpoint=${midpoint}s`);
+  return midpoint;
 }
 
 function parseTimeToSeconds(timeStr: string): number {
   // Remove 's' suffix if present and trim whitespace
   const cleanTime = timeStr.trim().replace(/s$/i, '');
   
-  // Check if it's already just a number (seconds)
+  // Check if it's already just a number (seconds) or decimal format like "0.5s"
   const directSeconds = parseFloat(cleanTime);
-  if (!isNaN(directSeconds)) {
+  if (!isNaN(directSeconds) && !cleanTime.includes(':')) {
     return directSeconds;
   }
   
   // Parse HH:MM:SS or MM:SS format
   const parts = cleanTime.split(':');
   if (parts.length === 2) {
-    return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+    const minutes = parseInt(parts[0]);
+    const seconds = parseInt(parts[1]);
+    return minutes * 60 + seconds;
   } else if (parts.length === 3) {
-    return parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2]);
+    const hours = parseInt(parts[0]);
+    const minutes = parseInt(parts[1]);
+    const seconds = parseInt(parts[2]);
+    return hours * 3600 + minutes * 60 + seconds;
   }
+  
+  console.error(`Unable to parse time: "${timeStr}"`);
   return 0;
 }
 
@@ -71,7 +82,10 @@ export async function extractFramesFromVideo(
     
     try {
       await new Promise<void>((resolve, reject) => {
-        ffmpeg(videoPath)
+        // Ensure video path is absolute
+        const absoluteVideoPath = path.isAbsolute(videoPath) ? videoPath : path.resolve(videoPath);
+        
+        ffmpeg(absoluteVideoPath)
           .seekInput(timestamp)
           .frames(1)
           .output(framePath)
