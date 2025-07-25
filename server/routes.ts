@@ -11,11 +11,13 @@ const upload = multer({
   dest: "uploads/",
   limits: { fileSize: 100 * 1024 * 1024 }, // 100MB limit
   fileFilter: (req, file, cb) => {
-    const allowedTypes = /mp4|mov|avi/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
+    const allowedExtensions = /\.(mp4|mov|avi)$/i;
+    const allowedMimeTypes = /^video\//;
     
-    if (mimetype && extname) {
+    const extname = allowedExtensions.test(file.originalname);
+    const mimetype = allowedMimeTypes.test(file.mimetype);
+    
+    if (extname || mimetype) {
       return cb(null, true);
     } else {
       cb(new Error("Only video files (MP4, MOV, AVI) are allowed"));

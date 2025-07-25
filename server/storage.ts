@@ -40,9 +40,15 @@ export class MemStorage implements IStorage {
   async createSwingAnalysis(insertAnalysis: InsertSwingAnalysis): Promise<SwingAnalysis> {
     const id = randomUUID();
     const analysis: SwingAnalysis = {
-      ...insertAnalysis,
       id,
       userId: insertAnalysis.userId || null,
+      videoPath: insertAnalysis.videoPath,
+      title: insertAnalysis.title,
+      overallScore: insertAnalysis.overallScore,
+      overallFeedback: insertAnalysis.overallFeedback,
+      swingPhases: insertAnalysis.swingPhases,
+      keyMetrics: insertAnalysis.keyMetrics,
+      recommendations: insertAnalysis.recommendations,
       createdAt: new Date(),
     };
     this.swingAnalyses.set(id, analysis);

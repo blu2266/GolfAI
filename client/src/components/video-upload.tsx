@@ -36,8 +36,14 @@ export function VideoUpload({ onAnalysisStart, onAnalysisComplete }: VideoUpload
       });
       
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Upload failed");
+        let errorMessage = "Upload failed";
+        try {
+          const error = await response.json();
+          errorMessage = error.message || errorMessage;
+        } catch {
+          errorMessage = `Server error (${response.status})`;
+        }
+        throw new Error(errorMessage);
       }
       
       return response.json();
@@ -91,9 +97,12 @@ export function VideoUpload({ onAnalysisStart, onAnalysisComplete }: VideoUpload
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // Validate file type
-      const allowedTypes = ['video/mp4', 'video/mov', 'video/avi', 'video/quicktime'];
-      if (!allowedTypes.includes(file.type)) {
+      // Validate file type - check both extension and MIME type
+      const allowedExtensions = /\.(mp4|mov|avi)$/i;
+      const isVideoMimeType = file.type.startsWith('video/');
+      const hasValidExtension = allowedExtensions.test(file.name);
+      
+      if (!isVideoMimeType && !hasValidExtension) {
         toast({
           title: "Invalid File Type",
           description: "Please select an MP4, MOV, or AVI video file.",
