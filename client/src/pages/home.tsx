@@ -7,7 +7,7 @@ import type { SwingAnalysis } from "@shared/schema";
 import { Clock, Star } from "lucide-react";
 
 export default function Home() {
-  const [currentSection, setCurrentSection] = useState<"upload" | "processing" | "results">("upload");
+  const [showResults, setShowResults] = useState(false);
   const [currentAnalysisId, setCurrentAnalysisId] = useState<string | null>(null);
 
   const { data: recentAnalyses, isLoading } = useQuery<SwingAnalysis[]>({
@@ -16,11 +16,11 @@ export default function Home() {
 
   const handleAnalysisComplete = (analysisId: string) => {
     setCurrentAnalysisId(analysisId);
-    setCurrentSection("results");
+    setShowResults(true);
   };
 
   const handleBackToUpload = () => {
-    setCurrentSection("upload");
+    setShowResults(false);
     setCurrentAnalysisId(null);
   };
 
@@ -58,7 +58,7 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="max-w-md mx-auto pb-20">
-        {currentSection === "upload" && (
+        {!showResults ? (
           <section className="p-4 space-y-6">
             <div className="text-center py-4">
               <h2 className="text-2xl font-bold text-deep-navy mb-2">Analyze Your Golf Swing</h2>
@@ -66,7 +66,6 @@ export default function Home() {
             </div>
 
             <VideoUpload
-              onAnalysisStart={() => setCurrentSection("processing")}
               onAnalysisComplete={handleAnalysisComplete}
             />
 
@@ -94,7 +93,7 @@ export default function Home() {
                       key={analysis.id}
                       onClick={() => {
                         setCurrentAnalysisId(analysis.id);
-                        setCurrentSection("results");
+                        setShowResults(true);
                       }}
                       className="w-full bg-white rounded-xl p-4 shadow-sm border border-slate-200 flex items-center space-x-4 hover:bg-slate-50 transition-colors"
                     >
@@ -131,13 +130,13 @@ export default function Home() {
               )}
             </div>
           </section>
-        )}
-
-        {currentSection === "results" && currentAnalysisId && (
-          <AnalysisResults 
-            analysisId={currentAnalysisId} 
-            onBack={handleBackToUpload}
-          />
+        ) : (
+          currentAnalysisId && (
+            <AnalysisResults 
+              analysisId={currentAnalysisId} 
+              onBack={handleBackToUpload}
+            />
+          )
         )}
       </main>
 

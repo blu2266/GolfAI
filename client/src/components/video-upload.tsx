@@ -8,11 +8,10 @@ import { apiRequest } from "@/lib/queryClient";
 import { CloudUpload, Video, Play, Check, Loader2 } from "lucide-react";
 
 interface VideoUploadProps {
-  onAnalysisStart: () => void;
   onAnalysisComplete: (analysisId: string) => void;
 }
 
-export function VideoUpload({ onAnalysisStart, onAnalysisComplete }: VideoUploadProps) {
+export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStep, setProcessingStep] = useState(0);
@@ -130,7 +129,6 @@ export function VideoUpload({ onAnalysisStart, onAnalysisComplete }: VideoUpload
 
     setIsProcessing(true);
     setProcessingStep(0);
-    onAnalysisStart();
 
     const formData = new FormData();
     formData.append("video", selectedFile);
