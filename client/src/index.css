@@ -95,4 +95,27 @@
   .border-golden {
     border-color: var(--golden);
   }
+  
+  /* Golf swing animation */
+  @keyframes golf-swing {
+    0% { transform: rotate(-45deg); }
+    50% { transform: rotate(120deg); }
+    70% { transform: rotate(100deg); }
+    100% { transform: rotate(-45deg); }
+  }
+  
+  .animate-golf-swing {
+    animation: golf-swing 2s ease-in-out infinite;
+  }
+  
+  /* Ball trail effect */
+  @keyframes ball-trail {
+    0% { opacity: 0; transform: translateX(0) scale(0.5); }
+    50% { opacity: 1; transform: translateX(20px) scale(1); }
+    100% { opacity: 0; transform: translateX(40px) scale(0.5); }
+  }
+  
+  .animate-ball-trail {
+    animation: ball-trail 1.5s ease-in-out infinite;
+  }
 }

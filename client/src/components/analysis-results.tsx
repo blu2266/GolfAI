@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { VideoPlayer } from "@/components/video-player";
+import { VideoFrameExtractor } from "@/components/video-frame-extractor";
 import { ArrowLeft, Star, TrendingUp, Lightbulb, ArrowRight, Target } from "lucide-react";
 import type { SwingAnalysis } from "@shared/schema";
 
@@ -119,35 +120,49 @@ export function AnalysisResults({ analysisId, onBack }: AnalysisResultsProps) {
           <div key={index} className="mx-4">
             <Card>
               <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-golf-green/20 rounded-full flex items-center justify-center">
-                      <div className="w-3 h-3 bg-golf-green rounded-full"></div>
+                <div className="flex gap-4">
+                  {/* Video Frame Thumbnail */}
+                  <div className="flex-shrink-0">
+                    <VideoFrameExtractor
+                      videoSrc={analysis.videoPath.startsWith("sample") ? "" : `/api/videos/${analysis.videoPath.split('/').pop()}`}
+                      timestamp={phase.timestamp}
+                      className="w-24 h-16 rounded-lg object-cover shadow-sm"
+                    />
+                  </div>
+                  
+                  {/* Phase Content */}
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-golf-green/20 rounded-full flex items-center justify-center">
+                          <div className="w-3 h-3 bg-golf-green rounded-full"></div>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-deep-navy">{phase.name}</h4>
+                          <p className="text-xs text-slate-600">{phase.timestamp}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className={`text-lg font-bold ${getScoreColor(phase.score)}`}>
+                          {phase.score}
+                        </div>
+                        <div className="text-xs text-slate-500">Score</div>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-semibold text-deep-navy">{phase.name}</h4>
-                      <p className="text-xs text-slate-600">{phase.timestamp}</p>
+                    <p className="text-sm text-slate-700 mb-3">{phase.feedback}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {phase.strengths.map((strength, i) => (
+                        <Badge key={i} variant="secondary" className="bg-golf-green/10 text-golf-green text-xs">
+                          {strength}
+                        </Badge>
+                      ))}
+                      {phase.improvements.map((improvement, i) => (
+                        <Badge key={i} variant="secondary" className="bg-golden/10 text-golden text-xs">
+                          {improvement}
+                        </Badge>
+                      ))}
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className={`text-lg font-bold ${getScoreColor(phase.score)}`}>
-                      {phase.score}
-                    </div>
-                    <div className="text-xs text-slate-500">Score</div>
-                  </div>
-                </div>
-                <p className="text-sm text-slate-700 mb-3">{phase.feedback}</p>
-                <div className="flex flex-wrap gap-2">
-                  {phase.strengths.map((strength, i) => (
-                    <Badge key={i} variant="secondary" className="bg-golf-green/10 text-golf-green text-xs">
-                      {strength}
-                    </Badge>
-                  ))}
-                  {phase.improvements.map((improvement, i) => (
-                    <Badge key={i} variant="secondary" className="bg-golden/10 text-golden text-xs">
-                      {improvement}
-                    </Badge>
-                  ))}
                 </div>
               </CardContent>
             </Card>

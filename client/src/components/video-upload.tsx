@@ -167,11 +167,40 @@ export function VideoUpload({ onAnalysisStart, onAnalysisComplete }: VideoUpload
     return (
       <div className="space-y-6">
         <div className="text-center py-8">
-          <div className="w-20 h-20 bg-golf-green/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <div className="w-12 h-12 border-4 border-golf-green border-t-transparent rounded-full animate-spin"></div>
+          {/* Golf Ball Animation */}
+          <div className="relative h-32 mb-6">
+            <div className="absolute inset-x-0 bottom-0 h-1 bg-golf-green/30 rounded-full mx-8"></div>
+            <div className="absolute left-1/2 transform -translate-x-1/2 animate-bounce">
+              <div className="w-12 h-12 bg-white rounded-full shadow-lg relative overflow-hidden">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-2 h-2 bg-slate-300 rounded-full"></div>
+                  <div className="w-1 h-1 bg-slate-300 rounded-full absolute left-3 top-3"></div>
+                  <div className="w-1 h-1 bg-slate-300 rounded-full absolute right-3 top-3"></div>
+                  <div className="w-1 h-1 bg-slate-300 rounded-full absolute left-3 bottom-3"></div>
+                  <div className="w-1 h-1 bg-slate-300 rounded-full absolute right-3 bottom-3"></div>
+                </div>
+              </div>
+            </div>
+            {/* Golf Club with swing animation */}
+            <div className="absolute left-1/2 top-0 transform -translate-x-1/2 origin-bottom animate-golf-swing">
+              <div className="w-1 h-20 bg-slate-600 rounded-full"></div>
+              <div className="w-6 h-3 bg-slate-700 absolute -top-1 -left-2.5 rounded-t-lg"></div>
+            </div>
+            {/* Ball trail effect */}
+            <div className="absolute left-1/2 bottom-0 transform -translate-x-1/2">
+              <div className="w-3 h-3 bg-white rounded-full shadow-sm animate-ball-trail"></div>
+            </div>
           </div>
+          
           <h2 className="text-xl font-bold text-deep-navy mb-2">Analyzing Your Swing</h2>
-          <p className="text-slate-600 text-sm mb-6">Our AI is examining your technique...</p>
+          <p className="text-slate-600 text-sm mb-6">
+            {[
+              "Tracking club path...",
+              "Measuring swing speed...",
+              "Analyzing body mechanics...",
+              "Calculating optimal angles..."
+            ][processingStep] || "Our AI coach is studying your technique..."}
+          </p>
           
           <Progress value={uploadProgress} className="w-full mb-4" />
           <p className="text-xs text-slate-500">
