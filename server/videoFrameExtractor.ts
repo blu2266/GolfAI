@@ -5,7 +5,7 @@ import path from 'path';
 import { promisify } from 'util';
 import type { FrameExtraction } from '@shared/schema';
 
-ffmpeg.setFfmpegPath(ffmpegPath);
+ffmpeg.setFfmpegPath(ffmpegPath!);
 
 const mkdir = promisify(fs.mkdir);
 const access = promisify(fs.access);

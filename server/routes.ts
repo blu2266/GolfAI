@@ -90,25 +90,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Analyze with Gemini
       const analysisResult = await analyzeGolfSwing(videoPath);
 
-      // Extract frames from video at timestamps mentioned in swing phases
-      let frameExtractions = [];
-      try {
-        frameExtractions = await extractFramesFromVideo(
-          videoPath,
-          '', // Will use analysis ID later
-          analysisResult.swingPhases
-        );
-      } catch (error) {
-        console.error("Failed to extract frames:", error);
-        // Continue without frames if extraction fails
-      }
-
-      // Create analysis record
+      // Create analysis record first
       const analysisData = {
         userId,
         videoPath: videoPath,
         title,
-        frameExtractions,
+        frameExtractions: [],
         ...analysisResult
       };
 
@@ -116,17 +103,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const analysis = await storage.createSwingAnalysis(validatedData);
 
       // Now extract frames with the correct analysis ID
-      if (frameExtractions.length === 0) {
-        try {
-          const updatedFrameExtractions = await extractFramesFromVideo(
-            videoPath,
-            analysis.id,
-            analysisResult.swingPhases
-          );
-          await storage.updateSwingAnalysis(analysis.id, { frameExtractions: updatedFrameExtractions });
-        } catch (error) {
-          console.error("Failed to extract frames with analysis ID:", error);
-        }
+      try {
+        const frameExtractions = await extractFramesFromVideo(
+          videoPath,
+          analysis.id,
+          analysisResult.swingPhases
+        );
+        
+        // Update analysis with frame extractions
+        await storage.updateSwingAnalysis(analysis.id, { frameExtractions });
+        
+        // Return updated analysis with frame extractions
+        analysis.frameExtractions = frameExtractions;
+      } catch (error) {
+        console.error("Failed to extract frames:", error);
+        // Continue without frames if extraction fails
       }
 
       res.json(analysis);

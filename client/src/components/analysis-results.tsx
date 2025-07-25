@@ -244,20 +244,26 @@ export function AnalysisResults({ analysisId, onBack }: AnalysisResultsProps) {
                   {/* Video Frame Thumbnail */}
                   <div className="flex-shrink-0">
                     {analysis.frameExtractions && analysis.frameExtractions.find(frame => frame.timestamp === phase.timestamp) ? (
-                      <img 
-                        src={`/api/frames/${analysis.id}/${phase.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}.jpg`}
-                        alt={`${phase.name} frame`}
-                        className="w-24 h-16 rounded-lg object-cover shadow-sm bg-slate-200"
-                        onError={(e) => {
-                          // Fallback to gray placeholder if frame not found
-                          e.currentTarget.style.display = 'none';
-                          e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                        }}
-                      />
-                    ) : null}
-                    <div className="w-24 h-16 rounded-lg bg-slate-200 shadow-sm flex items-center justify-center text-slate-400 text-xs hidden">
-                      No Preview
-                    </div>
+                      <>
+                        <img 
+                          src={`/api/frames/${analysis.id}/${phase.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}.jpg`}
+                          alt={`${phase.name} frame`}
+                          className="w-24 h-16 rounded-lg object-cover shadow-sm bg-slate-200"
+                          onError={(e) => {
+                            // Fallback to gray placeholder if frame not found
+                            e.currentTarget.style.display = 'none';
+                            e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                          }}
+                        />
+                        <div className="w-24 h-16 rounded-lg bg-slate-200 shadow-sm flex items-center justify-center text-slate-400 text-xs hidden">
+                          No Preview
+                        </div>
+                      </>
+                    ) : (
+                      <div className="w-24 h-16 rounded-lg bg-slate-200 shadow-sm flex items-center justify-center text-slate-400 text-xs">
+                        No Preview
+                      </div>
+                    )}
                   </div>
                   
                   {/* Phase Content */}
