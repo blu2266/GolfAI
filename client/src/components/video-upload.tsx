@@ -133,6 +133,7 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
     const formData = new FormData();
     formData.append("video", selectedFile);
     formData.append("title", `${selectedFile.name.split('.')[0]} - Analysis`);
+    formData.append("userId", "temp-user");
 
     // Simulate processing steps
     const stepInterval = setInterval(() => {

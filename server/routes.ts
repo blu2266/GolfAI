@@ -72,7 +72,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create analysis record
       const analysisData = {
-        userId: userId || null,
+        userId: userId || "temp-user", // Default to temp-user
         videoPath: videoPath,
         title,
         ...analysisResult
@@ -116,7 +116,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/sample-analysis", async (req, res) => {
     try {
       const sampleAnalysis = {
-        userId: null,
+        userId: "temp-user",
         videoPath: "sample.mp4",
         title: "Driver Practice - Range",
         overallScore: 8.2,
