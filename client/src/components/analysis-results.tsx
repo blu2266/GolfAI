@@ -20,7 +20,6 @@ interface AnalysisResultsProps {
 
 export function AnalysisResults({ analysisId, onBack }: AnalysisResultsProps) {
   const { toast } = useToast();
-  const userId = "temp-user"; // TODO: Get from auth context
   const [showSaveForm, setShowSaveForm] = useState(false);
   const [saveNotes, setSaveNotes] = useState("");
   const [selectedClubId, setSelectedClubId] = useState<string>("");
@@ -31,7 +30,7 @@ export function AnalysisResults({ analysisId, onBack }: AnalysisResultsProps) {
   });
   
   const { data: clubs } = useQuery<Club[]>({
-    queryKey: [`/api/clubs/${userId}`],
+    queryKey: [`/api/clubs`],
   });
   
   const saveMutation = useMutation({
@@ -182,7 +181,7 @@ export function AnalysisResults({ analysisId, onBack }: AnalysisResultsProps) {
                         <SelectValue placeholder="Select a club" />
                       </SelectTrigger>
                       <SelectContent>
-                        {clubs?.map((club) => (
+                        {clubs?.filter(club => club.isActive).map((club) => (
                           <SelectItem key={club.id} value={club.id}>
                             {club.name} ({club.type})
                           </SelectItem>
