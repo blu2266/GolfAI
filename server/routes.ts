@@ -7,7 +7,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { insertSwingAnalysisSchema, insertClubSchema, insertUserPreferencesSchema } from "@shared/schema";
 import { analyzeGolfSwing } from "./gemini";
-import { extractFramesFromVideo, getFrameUrl } from "./videoFrameExtractor";
+import { extractFramesFromVideo, getFrameUrl, createFullSwingGif } from "./videoFrameExtractor";
 
 const upload = multer({
   dest: "uploads/",
@@ -121,6 +121,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           analysis.id,
           analysisResult.swingPhases
         );
+        
+        // Create full swing GIF
+        await createFullSwingGif(videoPath, analysis.id);
         
         // Update analysis with frame extractions
         await storage.updateSwingAnalysis(analysis.id, { frameExtractions });

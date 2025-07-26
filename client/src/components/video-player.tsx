@@ -5,9 +5,11 @@ import { Play, Pause, RotateCcw } from "lucide-react";
 interface VideoPlayerProps {
   videoSrc?: string;
   className?: string;
+  analysisId?: string;
 }
 
-export function VideoPlayer({ videoSrc, className = "" }: VideoPlayerProps) {
+export function VideoPlayer({ videoSrc, className = "", analysisId }: VideoPlayerProps) {
+  const [showFullVideo, setShowFullVideo] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -62,6 +64,31 @@ export function VideoPlayer({ videoSrc, className = "" }: VideoPlayerProps) {
   };
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  // Show GIF preview if analysisId is provided and not showing full video yet
+  if (analysisId && !showFullVideo) {
+    return (
+      <div 
+        className={`relative bg-black rounded-2xl overflow-hidden cursor-pointer group ${className}`}
+        onClick={() => setShowFullVideo(true)}
+      >
+        <img 
+          src={`/api/frames/${analysisId}/full_swing.gif`}
+          alt="Golf swing preview"
+          className="w-full h-auto"
+          onError={(e) => {
+            // Fallback to showing video if GIF not available
+            setShowFullVideo(true);
+          }}
+        />
+        <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-colors">
+          <div className="bg-white/90 hover:bg-white rounded-full p-4 shadow-lg">
+            <Play className="w-8 h-8 text-deep-navy ml-1" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`relative bg-black rounded-t-2xl overflow-hidden ${className}`}>

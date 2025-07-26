@@ -116,3 +116,41 @@ export function getFrameUrl(analysisId: string, phaseName: string): string {
   const frameName = `${phaseName.toLowerCase().replace(/[^a-z0-9]/g, '_')}.gif`;
   return `/api/frames/${analysisId}/${frameName}`;
 }
+
+export async function createFullSwingGif(
+  videoPath: string,
+  analysisId: string
+): Promise<string> {
+  const framesDir = path.join('uploads', 'frames', analysisId);
+  
+  // Ensure frames directory exists
+  try {
+    await access(framesDir);
+  } catch {
+    await mkdir(framesDir, { recursive: true });
+  }
+
+  const gifPath = path.join(framesDir, 'full_swing.gif');
+  
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const absoluteVideoPath = path.isAbsolute(videoPath) ? videoPath : path.resolve(videoPath);
+      
+      // Create a GIF of the entire video
+      ffmpeg(absoluteVideoPath)
+        .outputOptions([
+          '-vf', 'fps=15,scale=480:-1:flags=lanczos', // 15 fps, 480px width
+          '-loop', '0' // Loop forever
+        ])
+        .output(gifPath)
+        .on('end', () => resolve())
+        .on('error', (err: any) => reject(err))
+        .run();
+    });
+
+    return path.relative('uploads', gifPath);
+  } catch (error) {
+    console.error('Failed to create full swing GIF:', error);
+    throw error;
+  }
+}

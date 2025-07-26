@@ -125,6 +125,7 @@ export function AnalysisResults({ analysisId, onBack }: AnalysisResultsProps) {
       <VideoPlayer 
         videoSrc={analysis.videoPath.startsWith("sample") ? undefined : `/api/videos/${analysis.videoPath.split('/').pop()}`}
         className="mx-4"
+        analysisId={analysis.id}
       />
 
       {/* Overall Score */}
