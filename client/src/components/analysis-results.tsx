@@ -246,12 +246,12 @@ export function AnalysisResults({ analysisId, onBack }: AnalysisResultsProps) {
                     {analysis.frameExtractions && analysis.frameExtractions.find(frame => frame.timestamp === phase.timestamp) ? (
                       <>
                         <img 
-                          src={`/api/frames/${analysis.id}/${phase.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}.jpg`}
-                          alt={`${phase.name} frame`}
+                          src={`/api/frames/${analysis.id}/${phase.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}.gif`}
+                          alt={`${phase.name} motion`}
                           className="w-24 h-16 rounded-lg object-cover shadow-sm bg-slate-200 cursor-pointer hover:opacity-80 transition-opacity"
                           onClick={() => setExpandedImage({ 
-                            src: `/api/frames/${analysis.id}/${phase.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}.jpg`,
-                            alt: `${phase.name} frame`
+                            src: `/api/frames/${analysis.id}/${phase.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}.gif`,
+                            alt: `${phase.name} motion`
                           })}
                           onError={(e) => {
                             // Fallback to gray placeholder if frame not found

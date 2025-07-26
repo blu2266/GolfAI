@@ -130,6 +130,7 @@ The application follows a full-stack architecture with a React frontend, Express
 - Performance charts using Recharts library
 - Consistent golf-themed color scheme throughout
 - Admin interface for dynamic prompt configuration
+- GIF animations for swing phase visualization instead of static frames
 
 ### Technical Updates
 - **Database Schema**: Migrated to Replit Auth user model with proper session handling

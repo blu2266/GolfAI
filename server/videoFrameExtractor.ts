@@ -12,23 +12,22 @@ const access = promisify(fs.access);
 
 
 
-// Parse timestamp like "00:00 - 00:01" and get middle point
-function parseTimestamp(timestamp: string): number {
+// Parse timestamp like "00:00 - 00:01" and get start/end times
+function parseTimestampRange(timestamp: string): { start: number, end: number } {
   console.log(`Parsing timestamp: "${timestamp}"`);
   const parts = timestamp.split(' - ');
   if (parts.length !== 2) {
-    // If it's a single timestamp like "00:00", use that
-    const result = parseTimeToSeconds(timestamp);
-    console.log(`Single timestamp parsed to: ${result}s`);
-    return result;
+    // If it's a single timestamp like "00:00", create a 1 second range
+    const time = parseTimeToSeconds(timestamp);
+    console.log(`Single timestamp parsed to: ${time}s, creating 1s range`);
+    return { start: time, end: time + 1 };
   }
   
   const startSeconds = parseTimeToSeconds(parts[0]);
   const endSeconds = parseTimeToSeconds(parts[1]);
-  const midpoint = (startSeconds + endSeconds) / 2;
   
-  console.log(`Range timestamp: start=${startSeconds}s, end=${endSeconds}s, midpoint=${midpoint}s`);
-  return midpoint;
+  console.log(`Range timestamp: start=${startSeconds}s, end=${endSeconds}s`);
+  return { start: startSeconds, end: endSeconds };
 }
 
 function parseTimeToSeconds(timeStr: string): number {
@@ -75,9 +74,10 @@ export async function extractFramesFromVideo(
   const extractions: FrameExtraction[] = [];
 
   for (const phase of swingPhases) {
-    const timestamp = parseTimestamp(phase.timestamp);
-    console.log(`Extracting frame for ${phase.name} at ${timestamp}s from timestamp: ${phase.timestamp}`);
-    const frameName = `${phase.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}.jpg`;
+    const { start, end } = parseTimestampRange(phase.timestamp);
+    const duration = end - start;
+    console.log(`Creating GIF for ${phase.name} from ${start}s to ${end}s (duration: ${duration}s)`);
+    const frameName = `${phase.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}.gif`;
     const framePath = path.join(framesDir, frameName);
     
     try {
@@ -85,9 +85,14 @@ export async function extractFramesFromVideo(
         // Ensure video path is absolute
         const absoluteVideoPath = path.isAbsolute(videoPath) ? videoPath : path.resolve(videoPath);
         
+        // Create a GIF from the time range
         ffmpeg(absoluteVideoPath)
-          .seekInput(timestamp)
-          .frames(1)
+          .seekInput(start)
+          .duration(duration)
+          .outputOptions([
+            '-vf', 'fps=10,scale=320:-1:flags=lanczos', // 10 fps, 320px width, maintain aspect ratio
+            '-loop', '0' // Loop forever
+          ])
           .output(framePath)
           .on('end', () => resolve())
           .on('error', (err: any) => reject(err))
@@ -99,7 +104,7 @@ export async function extractFramesFromVideo(
         framePath: path.relative('uploads', framePath)
       });
     } catch (error) {
-      console.error(`Failed to extract frame for ${phase.name}:`, error);
+      console.error(`Failed to create GIF for ${phase.name}:`, error);
       // Continue with other phases even if one fails
     }
   }
@@ -108,6 +113,6 @@ export async function extractFramesFromVideo(
 }
 
 export function getFrameUrl(analysisId: string, phaseName: string): string {
-  const frameName = `${phaseName.toLowerCase().replace(/[^a-z0-9]/g, '_')}.jpg`;
+  const frameName = `${phaseName.toLowerCase().replace(/[^a-z0-9]/g, '_')}.gif`;
   return `/api/frames/${analysisId}/${frameName}`;
 }
