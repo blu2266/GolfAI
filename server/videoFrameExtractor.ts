@@ -24,7 +24,13 @@ function parseTimestampRange(timestamp: string): { start: number, end: number } 
   }
   
   const startSeconds = parseTimeToSeconds(parts[0]);
-  const endSeconds = parseTimeToSeconds(parts[1]);
+  let endSeconds = parseTimeToSeconds(parts[1]);
+  
+  // If start and end are the same, add 1 second to ensure valid GIF duration
+  if (startSeconds === endSeconds) {
+    endSeconds = startSeconds + 1;
+    console.log(`Same start/end time detected, adjusting end to ${endSeconds}s`);
+  }
   
   console.log(`Range timestamp: start=${startSeconds}s, end=${endSeconds}s`);
   return { start: startSeconds, end: endSeconds };
