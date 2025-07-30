@@ -9,7 +9,6 @@ interface VideoPlayerProps {
 }
 
 export function VideoPlayer({ videoSrc, className = "", analysisId }: VideoPlayerProps) {
-  const [showFullVideo, setShowFullVideo] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -65,27 +64,19 @@ export function VideoPlayer({ videoSrc, className = "", analysisId }: VideoPlaye
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
-  // Show GIF preview if analysisId is provided and not showing full video yet
-  if (analysisId && !showFullVideo) {
+  // Show GIF preview if analysisId is provided
+  if (analysisId && videoSrc?.startsWith('/api/videos/')) {
     return (
-      <div 
-        className={`relative bg-black rounded-2xl overflow-hidden cursor-pointer group ${className}`}
-        onClick={() => setShowFullVideo(true)}
-      >
+      <div className={`relative bg-black rounded-2xl overflow-hidden ${className}`}>
         <img 
           src={`/api/frames/${analysisId}/full_swing.gif`}
           alt="Golf swing preview"
           className="w-full h-auto"
           onError={(e) => {
-            // Fallback to showing video if GIF not available
-            setShowFullVideo(true);
+            // If GIF fails to load, hide it and show video instead
+            e.currentTarget.style.display = 'none';
           }}
         />
-        <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-colors">
-          <div className="bg-white/90 hover:bg-white rounded-full p-4 shadow-lg">
-            <Play className="w-8 h-8 text-deep-navy ml-1" />
-          </div>
-        </div>
       </div>
     );
   }
