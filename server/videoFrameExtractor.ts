@@ -91,12 +91,12 @@ export async function extractFramesFromVideo(
         // Ensure video path is absolute
         const absoluteVideoPath = path.isAbsolute(videoPath) ? videoPath : path.resolve(videoPath);
         
-        // Create a GIF from the time range
+        // Create a high-quality GIF from the time range
         ffmpeg(absoluteVideoPath)
           .seekInput(start)
           .duration(duration)
           .outputOptions([
-            '-vf', 'fps=10,scale=320:-1:flags=lanczos', // 10 fps, 320px width, maintain aspect ratio
+            '-vf', 'fps=20,scale=640:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=256:stats_mode=single[p];[s1][p]paletteuse=dither=sierra2_4a', // Higher quality GIF with optimized palette
             '-loop', '0' // Loop forever
           ])
           .output(framePath)
@@ -142,10 +142,10 @@ export async function createFullSwingGif(
     await new Promise<void>((resolve, reject) => {
       const absoluteVideoPath = path.isAbsolute(videoPath) ? videoPath : path.resolve(videoPath);
       
-      // Create a GIF of the entire video
+      // Create a high-quality GIF of the entire video
       ffmpeg(absoluteVideoPath)
         .outputOptions([
-          '-vf', 'fps=15,scale=480:-1:flags=lanczos', // 15 fps, 480px width
+          '-vf', 'fps=24,scale=720:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=256:stats_mode=single[p];[s1][p]paletteuse=dither=sierra2_4a', // Higher quality with optimized palette
           '-loop', '0' // Loop forever
         ])
         .output(gifPath)
