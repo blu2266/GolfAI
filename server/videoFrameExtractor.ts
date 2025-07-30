@@ -98,20 +98,17 @@ export async function extractFramesFromVideo(
         // Create filter for ball tracking if applicable
         let filterComplex: string;
         if (shouldTrackBall) {
-          // Advanced filter with motion detection and trail effect for ball tracking
+          // Simplified ball tracking filter that's more robust
           filterComplex = [
             'fps=20,scale=640:-1:flags=lanczos',
-            // Motion detection to highlight fast-moving objects (like the ball)
-            'split=3[original][motion1][motion2]',
-            // Create motion mask
-            '[motion1]framestep=2,setpts=0.5*PTS[motion1a]',
-            '[motion2][motion1a]blend=all_expr=\'if(gt(abs(A-B),30),255,0)\'[motion]',
-            // Apply edge detection to motion areas
-            '[motion]edgedetect=low=0.1:high=0.3,negate[edges]',
-            // Create colored trail overlay
-            '[edges]colorkey=0x000000:0.01:0.5,colorchannelmixer=rr=0:rg=1:rb=0:ar=1:ag=0:ab=0[trail]',
-            // Blend trail with original
-            '[original][trail]overlay=format=auto[tracked]',
+            // Motion detection with simpler approach
+            'split=2[original][motion]',
+            // Detect motion areas
+            '[motion]tblend=all_mode=difference128,curves=m=0/0 0.5/0.5 1/0,eq=contrast=2[diff]',
+            // Create yellow overlay for motion
+            '[diff]colorkey=0x808080:0.3:0.5,lutrgb=r=255:g=255:b=0[yellow]',
+            // Blend with original
+            '[original][yellow]overlay[tracked]',
             // Generate palette
             '[tracked]split[s0][s1]',
             '[s0]palettegen=max_colors=256:stats_mode=single[p]',
@@ -192,25 +189,18 @@ export async function createFullSwingGif(
     await new Promise<void>((resolve, reject) => {
       const absoluteVideoPath = path.isAbsolute(videoPath) ? videoPath : path.resolve(videoPath);
       
-      // Complex filter for full swing with ball tracking visualization
+      // Simplified ball tracking filter for full swing
       const ballTrackingFilter = [
         // Scale and set fps
         'fps=24,scale=720:-1:flags=lanczos',
-        // Split for processing
-        'split=3[original][motion1][motion2]',
-        // Motion detection between frames
-        '[motion1]framestep=2,setpts=0.5*PTS[motion1a]',
-        '[motion2][motion1a]blend=all_expr=\'if(gt(abs(A-B),25),255,0)\'[motion]',
-        // Enhance motion areas with morphology to connect ball trail
-        '[motion]morphology=close:5,morphology=open:3[cleaned]',
-        // Edge detection on motion
-        '[cleaned]edgedetect=low=0.1:high=0.3[edges]',
-        // Create yellow trail for ball path
-        '[edges]colorkey=0x000000:0.01:0.5,colorchannelmixer=rr=1:rg=1:rb=0:ar=1:ag=1:ab=0:aa=0.8[trail]',
-        // Add glow effect to trail
-        '[trail]gblur=sigma=2[glowtrail]',
-        // Overlay trail on original
-        '[original][glowtrail]overlay=format=auto[tracked]',
+        // Motion detection
+        'split=2[original][motion]',
+        // Detect fast motion (ball)
+        '[motion]tblend=all_mode=difference128,curves=m=0/0 0.5/0.5 1/0,eq=contrast=3:brightness=0.1[diff]',
+        // Create yellow overlay
+        '[diff]colorkey=0x808080:0.2:0.4,lutrgb=r=255:g=255:b=0,gblur=sigma=1.5[yellow]',
+        // Blend with original
+        '[original][yellow]overlay[tracked]',
         // Generate optimized palette
         '[tracked]split[s0][s1]',
         '[s0]palettegen=max_colors=256:stats_mode=single[p]',
