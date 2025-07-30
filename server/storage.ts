@@ -16,12 +16,16 @@ import {
   type InsertPromptConfiguration
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 
 export interface IStorage {
   // User management (required for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  
+  // Subscription management
+  incrementFreeAnalysesUsed(userId: string): Promise<User | undefined>;
+  updateSubscriptionStatus(userId: string, stripeCustomerId: string, stripeSubscriptionId: string, status: string, tier: string, endDate: Date): Promise<User | undefined>;
   
   // Swing analysis management
   createSwingAnalysis(analysis: InsertSwingAnalysis): Promise<SwingAnalysis>;
@@ -70,6 +74,42 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return user;
+  }
+  
+  // Subscription management
+  async incrementFreeAnalysesUsed(userId: string): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({ 
+        freeAnalysesUsed: sql`${users.freeAnalysesUsed} + 1`,
+        updatedAt: new Date() 
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    return user || undefined;
+  }
+  
+  async updateSubscriptionStatus(
+    userId: string, 
+    stripeCustomerId: string, 
+    stripeSubscriptionId: string, 
+    status: string, 
+    tier: string, 
+    endDate: Date
+  ): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({
+        stripeCustomerId,
+        stripeSubscriptionId,
+        subscriptionStatus: status,
+        subscriptionTier: tier,
+        subscriptionEndDate: endDate,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    return user || undefined;
   }
 
   // Swing analysis management

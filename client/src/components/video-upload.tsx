@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { CloudUpload, Video, Play, Check, Loader2 } from "lucide-react";
+import { useLocation } from "wouter";
 
 interface VideoUploadProps {
   onAnalysisComplete: (analysisId: string) => void;
@@ -19,6 +20,7 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, navigate] = useLocation();
 
   const processingSteps = [
     "Video uploaded successfully",
@@ -35,14 +37,25 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
       });
       
       if (!response.ok) {
-        let errorMessage = "Upload failed";
+        let errorData: any = {};
         try {
-          const error = await response.json();
-          errorMessage = error.message || errorMessage;
+          errorData = await response.json();
         } catch {
-          errorMessage = `Server error (${response.status})`;
+          errorData = { message: `Server error (${response.status})` };
         }
-        throw new Error(errorMessage);
+        
+        // Check if subscription is required
+        if (response.status === 403 && errorData.subscriptionRequired) {
+          toast({
+            title: "Subscription Required",
+            description: `You've used ${errorData.freeAnalysesUsed} of 3 free analyses. Subscribe for unlimited access!`,
+            variant: "default",
+          });
+          setTimeout(() => navigate("/subscribe"), 1500);
+          return;
+        }
+        
+        throw new Error(errorData.message || "Upload failed");
       }
       
       return response.json();

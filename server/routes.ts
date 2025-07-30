@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import express, { type Express } from "express";
 import { createServer, type Server } from "http";
 import multer from "multer";
 import path from "path";
@@ -8,6 +8,7 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import { insertSwingAnalysisSchema, insertClubSchema, insertUserPreferencesSchema } from "@shared/schema";
 import { analyzeGolfSwing } from "./gemini";
 import { extractFramesFromVideo, getFrameUrl, createFullSwingGif } from "./videoFrameExtractor";
+import Stripe from "stripe";
 
 const upload = multer({
   dest: "uploads/",
@@ -30,6 +31,14 @@ const upload = multer({
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
   await setupAuth(app);
+  
+  // Initialize Stripe
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
+  }
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: "2023-10-16",
+  });
 
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
@@ -95,6 +104,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!title) {
         return res.status(400).json({ message: "Title is required" });
       }
+      
+      // Check subscription status
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      const freeAnalysesUsed = user.freeAnalysesUsed || 0;
+      const hasActiveSubscription = user.subscriptionStatus === 'active' && 
+        user.subscriptionEndDate && 
+        new Date(user.subscriptionEndDate) > new Date();
+      
+      if (freeAnalysesUsed >= 3 && !hasActiveSubscription) {
+        return res.status(403).json({ 
+          message: "Subscription required",
+          freeAnalysesUsed,
+          subscriptionRequired: true 
+        });
+      }
 
       // Get video file path for Gemini analysis
       const videoPath = req.file.path;
@@ -113,6 +141,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const validatedData = insertSwingAnalysisSchema.parse(analysisData);
       const analysis = await storage.createSwingAnalysis(validatedData);
+      
+      // Increment free analyses used if not on subscription
+      if (!hasActiveSubscription) {
+        await storage.incrementFreeAnalysesUsed(userId);
+      }
 
       // Now extract frames with the correct analysis ID
       try {
@@ -441,6 +474,157 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.sendFile(path.resolve(framePath));
     } else {
       res.status(404).json({ message: 'Frame not found' });
+    }
+  });
+  
+  // Subscription endpoints
+  app.get('/api/subscription-status', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      const freeAnalysesUsed = user.freeAnalysesUsed || 0;
+      const freeAnalysesRemaining = Math.max(0, 3 - freeAnalysesUsed);
+      const hasActiveSubscription = user.subscriptionStatus === 'active' && 
+        user.subscriptionEndDate && 
+        new Date(user.subscriptionEndDate) > new Date();
+      
+      res.json({
+        freeAnalysesUsed,
+        freeAnalysesRemaining,
+        hasActiveSubscription,
+        subscriptionStatus: user.subscriptionStatus,
+        subscriptionTier: user.subscriptionTier,
+        subscriptionEndDate: user.subscriptionEndDate
+      });
+    } catch (error) {
+      console.error("Error checking subscription status:", error);
+      res.status(500).json({ message: "Failed to check subscription status" });
+    }
+  });
+  
+  app.post('/api/create-subscription-checkout', isAuthenticated, async (req: any, res) => {
+    try {
+      const { priceId } = req.body;
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Create or retrieve Stripe customer
+      let stripeCustomerId = user.stripeCustomerId;
+      if (!stripeCustomerId) {
+        const customer = await stripe.customers.create({
+          email: user.email || undefined,
+          metadata: {
+            userId: user.id
+          }
+        });
+        stripeCustomerId = customer.id;
+        await storage.updateSubscriptionStatus(userId, stripeCustomerId, '', '', '', new Date());
+      }
+      
+      // Create checkout session
+      const session = await stripe.checkout.sessions.create({
+        customer: stripeCustomerId,
+        payment_method_types: ['card'],
+        line_items: [{
+          price: priceId,
+          quantity: 1,
+        }],
+        mode: 'subscription',
+        success_url: `https://${process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000'}/home?subscription=success`,
+        cancel_url: `https://${process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000'}/subscribe?canceled=true`,
+        metadata: {
+          userId: user.id
+        }
+      });
+      
+      res.json({ checkoutUrl: session.url });
+    } catch (error) {
+      console.error("Error creating checkout session:", error);
+      res.status(500).json({ message: "Failed to create checkout session" });
+    }
+  });
+  
+  // Stripe webhook endpoint (no auth required)
+  app.post('/api/webhook/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
+    const sig = req.headers['stripe-signature'] as string;
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    
+    if (!webhookSecret) {
+      console.error('Stripe webhook secret not configured');
+      return res.status(500).json({ message: 'Webhook secret not configured' });
+    }
+    
+    try {
+      const event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+      
+      switch (event.type) {
+        case 'checkout.session.completed': {
+          const session = event.data.object as Stripe.Checkout.Session;
+          const userId = session.metadata?.userId;
+          
+          if (userId && session.subscription) {
+            const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
+            
+            // Determine subscription tier based on price interval
+            let tier = 'monthly';
+            if (subscription.items.data[0]?.price.recurring?.interval === 'week') {
+              tier = 'weekly';
+            } else if (subscription.items.data[0]?.price.recurring?.interval === 'year') {
+              tier = 'yearly';
+            }
+            
+            await storage.updateSubscriptionStatus(
+              userId,
+              session.customer as string,
+              subscription.id,
+              subscription.status,
+              tier,
+              new Date(subscription.current_period_end * 1000)
+            );
+          }
+          break;
+        }
+        
+        case 'customer.subscription.updated':
+        case 'customer.subscription.deleted': {
+          const subscription = event.data.object as Stripe.Subscription;
+          const customer = await stripe.customers.retrieve(subscription.customer as string) as Stripe.Customer;
+          const userId = customer.metadata?.userId;
+          
+          if (userId) {
+            let tier = 'monthly';
+            if (subscription.items.data[0]?.price.recurring?.interval === 'week') {
+              tier = 'weekly';
+            } else if (subscription.items.data[0]?.price.recurring?.interval === 'year') {
+              tier = 'yearly';
+            }
+            
+            await storage.updateSubscriptionStatus(
+              userId,
+              customer.id,
+              subscription.id,
+              subscription.status,
+              tier,
+              new Date(subscription.current_period_end * 1000)
+            );
+          }
+          break;
+        }
+      }
+      
+      res.json({ received: true });
+    } catch (error) {
+      console.error('Webhook error:', error);
+      res.status(400).json({ message: 'Webhook error' });
     }
   });
 
