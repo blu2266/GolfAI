@@ -87,21 +87,71 @@ export async function extractFramesFromVideo(
     const framePath = path.join(framesDir, frameName);
     
     try {
+      // Check if this is the impact or follow-through phase where ball tracking would be most visible
+      const shouldTrackBall = phase.name.toLowerCase().includes('impact') || 
+                            phase.name.toLowerCase().includes('follow');
+      
       await new Promise<void>((resolve, reject) => {
         // Ensure video path is absolute
         const absoluteVideoPath = path.isAbsolute(videoPath) ? videoPath : path.resolve(videoPath);
         
-        // Create a high-quality GIF from the time range
+        // Create filter for ball tracking if applicable
+        let filterComplex: string;
+        if (shouldTrackBall) {
+          // Advanced filter with motion detection and trail effect for ball tracking
+          filterComplex = [
+            'fps=20,scale=640:-1:flags=lanczos',
+            // Motion detection to highlight fast-moving objects (like the ball)
+            'split=3[original][motion1][motion2]',
+            // Create motion mask
+            '[motion1]framestep=2,setpts=0.5*PTS[motion1a]',
+            '[motion2][motion1a]blend=all_expr=\'if(gt(abs(A-B),30),255,0)\'[motion]',
+            // Apply edge detection to motion areas
+            '[motion]edgedetect=low=0.1:high=0.3,negate[edges]',
+            // Create colored trail overlay
+            '[edges]colorkey=0x000000:0.01:0.5,colorchannelmixer=rr=0:rg=1:rb=0:ar=1:ag=0:ab=0[trail]',
+            // Blend trail with original
+            '[original][trail]overlay=format=auto[tracked]',
+            // Generate palette
+            '[tracked]split[s0][s1]',
+            '[s0]palettegen=max_colors=256:stats_mode=single[p]',
+            '[s1][p]paletteuse=dither=sierra2_4a'
+          ].join(',');
+        } else {
+          // Standard high-quality GIF filter
+          filterComplex = 'fps=20,scale=640:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=256:stats_mode=single[p];[s1][p]paletteuse=dither=sierra2_4a';
+        }
+        
+        // Create GIF with or without ball tracking
         ffmpeg(absoluteVideoPath)
           .seekInput(start)
           .duration(duration)
           .outputOptions([
-            '-vf', 'fps=20,scale=640:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=256:stats_mode=single[p];[s1][p]paletteuse=dither=sierra2_4a', // Higher quality GIF with optimized palette
+            '-vf', filterComplex,
             '-loop', '0' // Loop forever
           ])
           .output(framePath)
-          .on('end', () => resolve())
-          .on('error', (err: any) => reject(err))
+          .on('end', () => {
+            if (shouldTrackBall) {
+              console.log(`Created GIF with ball tracking attempt for ${phase.name}`);
+            }
+            resolve();
+          })
+          .on('error', (err: any) => {
+            console.error(`Failed with ball tracking, trying standard GIF for ${phase.name}`);
+            // Fallback to standard GIF if ball tracking fails
+            ffmpeg(absoluteVideoPath)
+              .seekInput(start)
+              .duration(duration)
+              .outputOptions([
+                '-vf', 'fps=20,scale=640:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=256:stats_mode=single[p];[s1][p]paletteuse=dither=sierra2_4a',
+                '-loop', '0'
+              ])
+              .output(framePath)
+              .on('end', () => resolve())
+              .on('error', (err2: any) => reject(err2))
+              .run();
+          })
           .run();
       });
 
@@ -142,15 +192,55 @@ export async function createFullSwingGif(
     await new Promise<void>((resolve, reject) => {
       const absoluteVideoPath = path.isAbsolute(videoPath) ? videoPath : path.resolve(videoPath);
       
-      // Create a high-quality GIF of the entire video
+      // Complex filter for full swing with ball tracking visualization
+      const ballTrackingFilter = [
+        // Scale and set fps
+        'fps=24,scale=720:-1:flags=lanczos',
+        // Split for processing
+        'split=3[original][motion1][motion2]',
+        // Motion detection between frames
+        '[motion1]framestep=2,setpts=0.5*PTS[motion1a]',
+        '[motion2][motion1a]blend=all_expr=\'if(gt(abs(A-B),25),255,0)\'[motion]',
+        // Enhance motion areas with morphology to connect ball trail
+        '[motion]morphology=close:5,morphology=open:3[cleaned]',
+        // Edge detection on motion
+        '[cleaned]edgedetect=low=0.1:high=0.3[edges]',
+        // Create yellow trail for ball path
+        '[edges]colorkey=0x000000:0.01:0.5,colorchannelmixer=rr=1:rg=1:rb=0:ar=1:ag=1:ab=0:aa=0.8[trail]',
+        // Add glow effect to trail
+        '[trail]gblur=sigma=2[glowtrail]',
+        // Overlay trail on original
+        '[original][glowtrail]overlay=format=auto[tracked]',
+        // Generate optimized palette
+        '[tracked]split[s0][s1]',
+        '[s0]palettegen=max_colors=256:stats_mode=single[p]',
+        '[s1][p]paletteuse=dither=sierra2_4a'
+      ].join(',');
+      
+      // Try with ball tracking first
       ffmpeg(absoluteVideoPath)
         .outputOptions([
-          '-vf', 'fps=24,scale=720:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=256:stats_mode=single[p];[s1][p]paletteuse=dither=sierra2_4a', // Higher quality with optimized palette
+          '-vf', ballTrackingFilter,
           '-loop', '0' // Loop forever
         ])
         .output(gifPath)
-        .on('end', () => resolve())
-        .on('error', (err: any) => reject(err))
+        .on('end', () => {
+          console.log('Created full swing GIF with ball tracking visualization');
+          resolve();
+        })
+        .on('error', (err: any) => {
+          console.error('Ball tracking failed, creating standard GIF:', err.message);
+          // Fallback to high-quality GIF without tracking
+          ffmpeg(absoluteVideoPath)
+            .outputOptions([
+              '-vf', 'fps=24,scale=720:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=256:stats_mode=single[p];[s1][p]paletteuse=dither=sierra2_4a',
+              '-loop', '0'
+            ])
+            .output(gifPath)
+            .on('end', () => resolve())
+            .on('error', (err2: any) => reject(err2))
+            .run();
+        })
         .run();
     });
 
