@@ -11,7 +11,6 @@ import Profile from "@/pages/profile";
 import Landing from "@/pages/landing";
 import Admin from "@/pages/admin";
 import Analysis from "@/pages/analysis";
-import Subscribe from "@/pages/subscribe";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -37,7 +36,6 @@ function Router() {
           <Route path="/profile" component={Profile} />
           <Route path="/admin" component={Admin} />
           <Route path="/analysis/:id" component={Analysis} />
-          <Route path="/subscribe" component={Subscribe} />
         </>
       )}
       <Route component={NotFound} />

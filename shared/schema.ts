@@ -25,13 +25,6 @@ export const users = pgTable("users", {
   isAdmin: boolean("is_admin").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-  // Subscription fields
-  stripeCustomerId: varchar("stripe_customer_id"),
-  stripeSubscriptionId: varchar("stripe_subscription_id"),
-  subscriptionStatus: varchar("subscription_status"), // active, canceled, past_due, etc
-  subscriptionTier: varchar("subscription_tier"), // weekly, monthly, yearly
-  subscriptionEndDate: timestamp("subscription_end_date"),
-  freeAnalysesUsed: integer("free_analyses_used").default(0),
 });
 
 // Prompt configurations table for admin control over AI prompts

@@ -1,49 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { VideoUpload } from "@/components/video-upload";
 import { AnalysisResults } from "@/components/analysis-results";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import { useQuery } from "@tanstack/react-query";
 import type { SwingAnalysis } from "@shared/schema";
-import { Clock, Star, Crown, ChevronRight } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Link, useSearch } from "wouter";
-import { useToast } from "@/hooks/use-toast";
-
-interface SubscriptionStatus {
-  freeAnalysesUsed: number;
-  freeAnalysesRemaining: number;
-  hasActiveSubscription: boolean;
-  subscriptionStatus?: string;
-  subscriptionTier?: string;
-  subscriptionEndDate?: string;
-}
+import { Clock, Star } from "lucide-react";
 
 export default function Home() {
   const [showResults, setShowResults] = useState(false);
   const [currentAnalysisId, setCurrentAnalysisId] = useState<string | null>(null);
-  const { toast } = useToast();
-  const search = useSearch();
-  const params = new URLSearchParams(search);
 
   const { data: recentAnalyses, isLoading } = useQuery<SwingAnalysis[]>({
     queryKey: ["/api/swing-analyses"],
   });
-  
-  const { data: subscriptionStatus } = useQuery<SubscriptionStatus>({
-    queryKey: ["/api/subscription-status"],
-  });
-  
-  useEffect(() => {
-    if (params.get('subscription') === 'success') {
-      toast({
-        title: "Welcome to Premium!",
-        description: "Your subscription is now active. Enjoy unlimited swing analyses!",
-      });
-      // Clear the query param
-      window.history.replaceState({}, '', '/');
-    }
-  }, [params, toast]);
 
   const handleAnalysisComplete = (analysisId: string) => {
     setCurrentAnalysisId(analysisId);
@@ -95,51 +64,6 @@ export default function Home() {
               <h2 className="text-2xl font-bold text-deep-navy mb-2">Analyze Your Golf Swing</h2>
               <p className="text-slate-600 text-sm">Upload a video and get AI-powered insights to improve your game</p>
             </div>
-            
-            {/* Subscription Status */}
-            {subscriptionStatus && !subscriptionStatus.hasActiveSubscription && (
-              <Card className="bg-gradient-to-r from-golf-green/10 to-blue-50 border-golf-green/20">
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-deep-navy mb-1">
-                        Free Analyses: {subscriptionStatus.freeAnalysesUsed} / 3 used
-                      </p>
-                      <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-                        <div 
-                          className="bg-golf-green h-2 rounded-full transition-all"
-                          style={{ width: `${(subscriptionStatus.freeAnalysesUsed / 3) * 100}%` }}
-                        />
-                      </div>
-                      {subscriptionStatus.freeAnalysesRemaining === 0 ? (
-                        <p className="text-xs text-slate-600">Subscribe for unlimited analyses!</p>
-                      ) : (
-                        <p className="text-xs text-slate-600">{subscriptionStatus.freeAnalysesRemaining} free analyses remaining</p>
-                      )}
-                    </div>
-                    <Link href="/subscribe">
-                      <Button size="sm" variant="outline" className="ml-4">
-                        <Crown className="w-4 h-4 mr-1" />
-                        Go Pro
-                      </Button>
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-            
-            {/* Active Subscription Badge */}
-            {subscriptionStatus?.hasActiveSubscription && (
-              <div className="bg-gradient-to-r from-golden/20 to-golden/10 rounded-lg p-3 flex items-center justify-between border border-golden/30">
-                <div className="flex items-center space-x-2">
-                  <Crown className="w-5 h-5 text-golden" />
-                  <span className="text-sm font-medium text-deep-navy">
-                    {subscriptionStatus.subscriptionTier?.charAt(0).toUpperCase() + subscriptionStatus.subscriptionTier?.slice(1)} Member
-                  </span>
-                </div>
-                <span className="text-xs text-slate-600">Unlimited Analyses</span>
-              </div>
-            )}
 
             <VideoUpload
               onAnalysisComplete={handleAnalysisComplete}
