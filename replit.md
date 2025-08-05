@@ -100,6 +100,14 @@ The application follows a full-stack architecture with a React frontend, Express
 
 ## Recent Changes (January 2025)
 
+### AR Swing Guidance Feature (Latest)
+- **AR Overlay System**: Real-time camera-based swing guidance with position overlays
+- **Live Analysis**: Real-time posture, alignment, and club position feedback
+- **Interactive Guidelines**: Visual markers for head position, shoulder line, hip line, ball position, and target line
+- **Practice Mode**: Standalone AR practice session without video recording
+- **Mobile Camera Integration**: Uses device's back camera with proper mobile optimization
+- **Confidence Scoring**: Real-time confidence percentage for swing setup analysis
+
 ### Major Feature Expansion
 - **Save Analyses**: Added ability to save analyses to personal history with club assignment and notes
 - **Club Management**: Full CRUD operations for managing golf clubs in user's bag

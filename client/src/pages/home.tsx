@@ -1,14 +1,16 @@
 import { useState } from "react";
 import { VideoUpload } from "@/components/video-upload";
 import { AnalysisResults } from "@/components/analysis-results";
+import { ARSwingGuide } from "@/components/ar-swing-guide";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import { useQuery } from "@tanstack/react-query";
 import type { SwingAnalysis } from "@shared/schema";
-import { Clock, Star } from "lucide-react";
+import { Clock, Star, Camera } from "lucide-react";
 
 export default function Home() {
   const [showResults, setShowResults] = useState(false);
   const [currentAnalysisId, setCurrentAnalysisId] = useState<string | null>(null);
+  const [showARGuide, setShowARGuide] = useState(false);
 
   const { data: recentAnalyses, isLoading } = useQuery<SwingAnalysis[]>({
     queryKey: ["/api/swing-analyses"],
@@ -68,6 +70,29 @@ export default function Home() {
             <VideoUpload
               onAnalysisComplete={handleAnalysisComplete}
             />
+
+            {/* AR Practice Mode */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <Camera className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-deep-navy">AR Practice Mode</h3>
+                  <p className="text-sm text-slate-600">Real-time swing guidance</p>
+                </div>
+              </div>
+              <p className="text-sm text-slate-600 mb-4">
+                Use your camera for live feedback on posture, alignment, and setup position.
+              </p>
+              <button
+                onClick={() => setShowARGuide(true)}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-xl font-medium transition-colors flex items-center justify-center space-x-2"
+              >
+                <Camera className="w-4 h-4" />
+                <span>Start AR Practice</span>
+              </button>
+            </div>
 
             {/* Recent Analyses */}
             <div className="space-y-3">
@@ -141,6 +166,11 @@ export default function Home() {
       </main>
 
       <BottomNavigation currentTab="home" />
+
+      {/* AR Guide Modal */}
+      {showARGuide && (
+        <ARSwingGuide onClose={() => setShowARGuide(false)} />
+      )}
     </div>
   );
 }
