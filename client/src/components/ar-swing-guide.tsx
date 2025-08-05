@@ -263,7 +263,7 @@ export function ARSwingGuide({ onClose }: ARSwingGuideProps) {
         </div>
 
         {/* Bottom Controls */}
-        <div className="absolute bottom-0 left-0 right-0 p-4">
+        <div className="absolute bottom-0 left-0 right-0 p-4 z-10">
           {/* Real-time Analysis */}
           {analysis && isActive && (
             <Card className="mb-4 bg-black/80 border-white/20">
@@ -293,7 +293,7 @@ export function ARSwingGuide({ onClose }: ARSwingGuideProps) {
           )}
 
           {/* Control Buttons */}
-          <div className="flex justify-center space-x-4">
+          <div className="flex justify-center space-x-4 relative z-20">
             <Button
               onClick={toggleAR}
               disabled={!isCameraReady}
@@ -301,7 +301,7 @@ export function ARSwingGuide({ onClose }: ARSwingGuideProps) {
                 isActive 
                   ? 'bg-red-600 hover:bg-red-700' 
                   : 'bg-green-600 hover:bg-green-700'
-              } text-white`}
+              } text-white border-0`}
             >
               {isActive ? (
                 <>
@@ -339,8 +339,8 @@ export function ARSwingGuide({ onClose }: ARSwingGuideProps) {
 
         {/* Instructions */}
         {!isActive && isCameraReady && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Card className="bg-black/80 border-white/20 max-w-sm mx-4">
+          <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
+            <Card className="bg-black/80 border-white/20 max-w-sm mx-4 pointer-events-auto">
               <CardContent className="p-6 text-center text-white">
                 <Target className="w-12 h-12 mx-auto mb-4 text-golf-green" />
                 <h3 className="text-lg font-semibold mb-2">AR Swing Guidance</h3>
