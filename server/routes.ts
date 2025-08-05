@@ -108,7 +108,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         videoPath: videoPath,
         title,
         frameExtractions: [],
-        ...analysisResult
+        ...analysisResult,
+        ballMetrics: analysisResult.ballMetrics || {}
       };
 
       const validatedData = insertSwingAnalysisSchema.parse(analysisData);

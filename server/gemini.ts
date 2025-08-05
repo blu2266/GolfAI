@@ -22,6 +22,13 @@ export async function analyzeGolfSwing(videoPath: string): Promise<{
     change?: string;
     changeDirection?: 'up' | 'down' | 'neutral';
   }>;
+  ballMetrics?: {
+    ballSpeed?: string;
+    estimatedDistance?: string;
+    launchAngle?: string;
+    hangTime?: string;
+    curve?: string;
+  };
   recommendations: Array<{
     title: string;
     description: string;
@@ -41,6 +48,13 @@ export async function analyzeGolfSwing(videoPath: string): Promise<{
       2. Downswing sequence (hip rotation, arm drop, weight transfer)
       3. Impact position (club face, body position, ball contact)
       4. Follow-through (extension, balance, finish position)
+
+      Also analyze and estimate these ball flight metrics based on the swing mechanics and impact:
+      - Ball speed (in mph)
+      - Estimated carry distance (in yards)
+      - Launch angle (in degrees)
+      - Hang time (in seconds)
+      - Shot shape/curve (draw, fade, straight, slice, hook)
 
       Provide scores from 1-10 for each phase and overall. Include specific, actionable recommendations.`;
       
@@ -68,6 +82,13 @@ export async function analyzeGolfSwing(videoPath: string): Promise<{
             "changeDirection": "up|down|neutral (optional)"
           }
         ],
+        "ballMetrics": {
+          "ballSpeed": "string (e.g., '145 mph')",
+          "estimatedDistance": "string (e.g., '275 yards')",
+          "launchAngle": "string (e.g., '12.5°')",
+          "hangTime": "string (e.g., '5.8 seconds')",
+          "curve": "string (e.g., 'slight draw', 'fade', 'straight')"
+        },
         "recommendations": [
           {
             "title": "string",
@@ -137,6 +158,16 @@ export async function analyzeGolfSwing(videoPath: string): Promise<{
                 },
                 required: ["title", "description", "priority", "category"]
               }
+            },
+            ballMetrics: {
+              type: "object",
+              properties: {
+                ballSpeed: { type: "string" },
+                estimatedDistance: { type: "string" },
+                launchAngle: { type: "string" },
+                hangTime: { type: "string" },
+                curve: { type: "string" }
+              }
             }
           },
           required: ["overallScore", "overallFeedback", "swingPhases", "keyMetrics", "recommendations"]
@@ -155,6 +186,7 @@ export async function analyzeGolfSwing(videoPath: string): Promise<{
       return {
         overallScore: Math.max(1, Math.min(10, result.overallScore || 7)),
         overallFeedback: result.overallFeedback || "Analysis complete. Focus on consistent practice.",
+        ballMetrics: result.ballMetrics || {},
         swingPhases: result.swingPhases || [
           {
             name: "Backswing",

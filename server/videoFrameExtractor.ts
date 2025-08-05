@@ -101,14 +101,11 @@ export async function extractFramesFromVideo(
           // Simplified ball tracking filter that's more robust
           filterComplex = [
             'fps=20,scale=640:-1:flags=lanczos',
-            // Motion detection with simpler approach
-            'split=2[original][motion]',
-            // Detect motion areas
-            '[motion]tblend=all_mode=difference128,curves=m=0/0 0.5/0.5 1/0,eq=contrast=2[diff]',
-            // Create yellow overlay for motion
-            '[diff]colorkey=0x808080:0.3:0.5,lutrgb=r=255:g=255:b=0[yellow]',
-            // Blend with original
-            '[original][yellow]overlay[tracked]',
+            // Simple motion detection overlay
+            'split=2[a][b]',
+            '[a]setpts=PTS+0.1/TB[a1]',
+            '[b][a1]blend=all_mode=difference,curves=m=0/0 0.1/0.5 1/1,eq=brightness=2:contrast=2,colorkey=0x000000:0.3:0.5,colorchannelmixer=rr=1:rg=1:rb=0[motion]',
+            '[b][motion]overlay=format=auto[tracked]',
             // Generate palette
             '[tracked]split[s0][s1]',
             '[s0]palettegen=max_colors=256:stats_mode=single[p]',

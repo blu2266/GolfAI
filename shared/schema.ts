@@ -73,6 +73,7 @@ export const swingAnalyses = pgTable("swing_analyses", {
   swingPhases: json("swing_phases").$type<SwingPhase[]>().notNull(),
   keyMetrics: json("key_metrics").$type<KeyMetric[]>().notNull(),
   recommendations: json("recommendations").$type<Recommendation[]>().notNull(),
+  ballMetrics: json("ball_metrics").$type<BallMetrics>(),
   frameExtractions: json("frame_extractions").$type<FrameExtraction[]>(),
   clubId: varchar("club_id").references(() => clubs.id),
   isSaved: boolean("is_saved").default(false).notNull(),
@@ -94,6 +95,14 @@ export type KeyMetric = {
   value: string;
   change?: string;
   changeDirection?: 'up' | 'down' | 'neutral';
+};
+
+export type BallMetrics = {
+  ballSpeed?: string;
+  estimatedDistance?: string;
+  launchAngle?: string;
+  hangTime?: string;
+  curve?: string;
 };
 
 export type Recommendation = {
@@ -202,12 +211,3 @@ export const CLUB_TYPES = [
 ] as const;
 
 export type ClubType = typeof CLUB_TYPES[number];
-
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
-export type SwingAnalysis = typeof swingAnalyses.$inferSelect;
-export type InsertSwingAnalysis = z.infer<typeof insertSwingAnalysisSchema>;
-export type Club = typeof clubs.$inferSelect;
-export type InsertClub = z.infer<typeof insertClubSchema>;
-export type UserPreferences = typeof userPreferences.$inferSelect;
-export type InsertUserPreferences = z.infer<typeof insertUserPreferencesSchema>;

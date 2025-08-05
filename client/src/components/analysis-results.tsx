@@ -233,6 +233,49 @@ export function AnalysisResults({ analysisId, onBack }: AnalysisResultsProps) {
         </Card>
       </div>
 
+      {/* Ball Metrics */}
+      {analysis.ballMetrics && Object.keys(analysis.ballMetrics).length > 0 && (
+        <div className="mx-4">
+          <Card>
+            <CardContent className="pt-6">
+              <h3 className="text-lg font-bold text-deep-navy mb-4">Ball Flight Metrics</h3>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                {analysis.ballMetrics.ballSpeed && (
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-golf-green">{analysis.ballMetrics.ballSpeed}</div>
+                    <div className="text-xs text-slate-600">Ball Speed</div>
+                  </div>
+                )}
+                {analysis.ballMetrics.estimatedDistance && (
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-golf-green">{analysis.ballMetrics.estimatedDistance}</div>
+                    <div className="text-xs text-slate-600">Est. Distance</div>
+                  </div>
+                )}
+                {analysis.ballMetrics.launchAngle && (
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-golf-green">{analysis.ballMetrics.launchAngle}</div>
+                    <div className="text-xs text-slate-600">Launch Angle</div>
+                  </div>
+                )}
+                {analysis.ballMetrics.hangTime && (
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-golf-green">{analysis.ballMetrics.hangTime}</div>
+                    <div className="text-xs text-slate-600">Hang Time</div>
+                  </div>
+                )}
+                {analysis.ballMetrics.curve && (
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-golf-green">{analysis.ballMetrics.curve}</div>
+                    <div className="text-xs text-slate-600">Shot Shape</div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Swing Breakdown */}
       <div className="space-y-3">
         <h3 className="text-lg font-bold text-deep-navy px-4">Swing Breakdown</h3>
