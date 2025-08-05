@@ -3,31 +3,34 @@
 @tailwind utilities;
 
 :root {
-  --background: hsl(0, 0%, 100%);
-  --foreground: hsl(20, 14.3%, 4.1%);
-  --muted: hsl(60, 4.8%, 95.9%);
-  --muted-foreground: hsl(25, 5.3%, 44.7%);
-  --popover: hsl(0, 0%, 100%);
-  --popover-foreground: hsl(20, 14.3%, 4.1%);
-  --card: hsl(0, 0%, 100%);
-  --card-foreground: hsl(20, 14.3%, 4.1%);
-  --border: hsl(20, 5.9%, 90%);
-  --input: hsl(20, 5.9%, 90%);
-  --primary: hsl(207, 90%, 54%);
-  --primary-foreground: hsl(211, 100%, 99%);
-  --secondary: hsl(60, 4.8%, 95.9%);
-  --secondary-foreground: hsl(24, 9.8%, 10%);
-  --accent: hsl(60, 4.8%, 95.9%);
-  --accent-foreground: hsl(24, 9.8%, 10%);
-  --destructive: hsl(0, 84.2%, 60.2%);
-  --destructive-foreground: hsl(60, 9.1%, 97.8%);
-  --ring: hsl(20, 14.3%, 4.1%);
-  --radius: 0.5rem;
+  --background: hsl(220, 20%, 7%);
+  --foreground: hsl(0, 0%, 95%);
+  --muted: hsl(220, 15%, 20%);
+  --muted-foreground: hsl(220, 10%, 60%);
+  --popover: hsl(220, 18%, 10%);
+  --popover-foreground: hsl(0, 0%, 95%);
+  --card: hsla(220, 18%, 10%, 0.6);
+  --card-foreground: hsl(0, 0%, 95%);
+  --border: hsla(220, 15%, 25%, 0.5);
+  --input: hsla(220, 15%, 25%, 0.3);
+  --primary: hsl(157, 100%, 50%);
+  --primary-foreground: hsl(220, 20%, 7%);
+  --secondary: hsl(217, 91%, 60%);
+  --secondary-foreground: hsl(0, 0%, 100%);
+  --accent: hsl(280, 100%, 65%);
+  --accent-foreground: hsl(0, 0%, 100%);
+  --destructive: hsl(0, 90%, 60%);
+  --destructive-foreground: hsl(0, 0%, 100%);
+  --ring: hsl(157, 100%, 50%);
+  --radius: 0.75rem;
   
-  /* Golf-specific colors */
-  --golf-green: hsl(142, 71%, 45%);
-  --deep-navy: hsl(222, 84%, 5%);
-  --golden: hsl(43, 96%, 56%);
+  /* Futuristic colors */
+  --neon-green: hsl(157, 100%, 50%);
+  --electric-blue: hsl(217, 91%, 60%);
+  --cyber-purple: hsl(280, 100%, 65%);
+  --deep-space: hsl(220, 20%, 7%);
+  --glass-white: hsla(0, 0%, 100%, 0.1);
+  --glass-border: hsla(0, 0%, 100%, 0.2);
 }
 
 .dark {
@@ -59,63 +62,195 @@
   }
 
   body {
-    @apply font-sans antialiased bg-slate-50 text-slate-900;
+    @apply font-sans antialiased bg-background text-foreground;
+    background: linear-gradient(135deg, hsl(220, 20%, 7%) 0%, hsl(220, 25%, 10%) 50%, hsl(217, 30%, 12%) 100%);
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+  }
+  
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+      radial-gradient(circle at 20% 50%, hsla(157, 100%, 50%, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, hsla(280, 100%, 65%, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 40% 20%, hsla(217, 91%, 60%, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  
+  #root {
+    position: relative;
+    z-index: 1;
   }
 }
 
 @layer utilities {
+  /* Futuristic glass effects */
+  .glass {
+    @apply backdrop-blur-xl bg-card border;
+    border-color: var(--glass-border);
+    box-shadow: 
+      0 0 40px hsla(157, 100%, 50%, 0.1),
+      inset 0 0 20px hsla(0, 0%, 100%, 0.05);
+  }
+  
+  .glass-hover {
+    @apply transition-all duration-300;
+  }
+  
+  .glass-hover:hover {
+    border-color: var(--glass-white);
+    box-shadow: 
+      0 0 60px hsla(157, 100%, 50%, 0.2),
+      inset 0 0 30px hsla(0, 0%, 100%, 0.1);
+  }
+  
+  /* Neon glow effects */
+  .neon-green {
+    color: var(--neon-green);
+    text-shadow: 0 0 10px hsla(157, 100%, 50%, 0.8);
+  }
+  
+  .neon-blue {
+    color: var(--electric-blue);
+    text-shadow: 0 0 10px hsla(217, 91%, 60%, 0.8);
+  }
+  
+  .neon-purple {
+    color: var(--cyber-purple);
+    text-shadow: 0 0 10px hsla(280, 100%, 65%, 0.8);
+  }
+  
+  /* Gradient backgrounds */
+  .gradient-primary {
+    background: linear-gradient(135deg, var(--neon-green) 0%, var(--electric-blue) 100%);
+  }
+  
+  .gradient-accent {
+    background: linear-gradient(135deg, var(--electric-blue) 0%, var(--cyber-purple) 100%);
+  }
+  
+  .gradient-border {
+    position: relative;
+    background: var(--background);
+  }
+  
+  .gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius);
+    padding: 1px;
+    background: linear-gradient(135deg, var(--neon-green), var(--electric-blue), var(--cyber-purple));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+  
+  /* Holographic effect */
+  .holographic {
+    background: linear-gradient(
+      45deg,
+      hsla(157, 100%, 50%, 0.3),
+      hsla(217, 91%, 60%, 0.3),
+      hsla(280, 100%, 65%, 0.3),
+      hsla(157, 100%, 50%, 0.3)
+    );
+    background-size: 400% 400%;
+    animation: holographic 8s ease infinite;
+  }
+  
+  @keyframes holographic {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  
+  /* Cyber grid background */
+  .cyber-grid {
+    background-image: 
+      linear-gradient(hsla(157, 100%, 50%, 0.1) 1px, transparent 1px),
+      linear-gradient(90deg, hsla(157, 100%, 50%, 0.1) 1px, transparent 1px);
+    background-size: 50px 50px;
+  }
+  
+  /* Animations */
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+  
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  @keyframes pulse-neon {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  
+  .animate-pulse-neon {
+    animation: pulse-neon 2s ease-in-out infinite;
+  }
+  
+  @keyframes scan-line {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100vh); }
+  }
+  
+  .scan-line::after {
+    content: '';
+    position: fixed;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--neon-green), transparent);
+    animation: scan-line 8s linear infinite;
+    pointer-events: none;
+    z-index: 9999;
+  }
+  
+  /* Tech borders */
+  .tech-border {
+    clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px));
+  }
+  
+  /* Updated color utilities */
   .text-golf-green {
-    color: var(--golf-green);
+    color: var(--neon-green);
   }
   
   .bg-golf-green {
-    background-color: var(--golf-green);
+    background-color: var(--neon-green);
   }
   
   .border-golf-green {
-    border-color: var(--golf-green);
+    border-color: var(--neon-green);
   }
   
   .text-deep-navy {
-    color: var(--deep-navy);
+    color: var(--deep-space);
   }
   
   .bg-deep-navy {
-    background-color: var(--deep-navy);
+    background-color: var(--deep-space);
   }
   
   .text-golden {
-    color: var(--golden);
+    color: var(--cyber-purple);
   }
   
   .bg-golden {
-    background-color: var(--golden);
+    background-color: var(--cyber-purple);
   }
   
   .border-golden {
-    border-color: var(--golden);
-  }
-  
-  /* Golf swing animation */
-  @keyframes golf-swing {
-    0% { transform: rotate(-45deg); }
-    50% { transform: rotate(120deg); }
-    70% { transform: rotate(100deg); }
-    100% { transform: rotate(-45deg); }
-  }
-  
-  .animate-golf-swing {
-    animation: golf-swing 2s ease-in-out infinite;
-  }
-  
-  /* Ball trail effect */
-  @keyframes ball-trail {
-    0% { opacity: 0; transform: translateX(0) scale(0.5); }
-    50% { opacity: 1; transform: translateX(20px) scale(1); }
-    100% { opacity: 0; transform: translateX(40px) scale(0.5); }
-  }
-  
-  .animate-ball-trail {
-    animation: ball-trail 1.5s ease-in-out infinite;
+    border-color: var(--cyber-purple);
   }
 }
