@@ -3,6 +3,7 @@ import { VideoUpload } from "@/components/video-upload";
 import { AnalysisResults } from "@/components/analysis-results";
 import { ARSwingGuide } from "@/components/ar-swing-guide";
 import { BottomNavigation } from "@/components/bottom-navigation";
+import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import type { SwingAnalysis } from "@shared/schema";
 import { Clock, Star, Camera } from "lucide-react";
@@ -85,13 +86,17 @@ export default function Home() {
               <p className="text-sm text-slate-600 mb-4">
                 Use your camera for live feedback on posture, alignment, and setup position.
               </p>
-              <button
-                onClick={() => setShowARGuide(true)}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-xl font-medium transition-colors flex items-center justify-center space-x-2"
+              <Button
+                onClick={() => {
+                  console.log('AR button clicked');
+                  setShowARGuide(true);
+                }}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                size="lg"
               >
-                <Camera className="w-4 h-4" />
-                <span>Start AR Practice</span>
-              </button>
+                <Camera className="w-4 h-4 mr-2" />
+                Start AR Practice
+              </Button>
             </div>
 
             {/* Recent Analyses */}
@@ -168,9 +173,11 @@ export default function Home() {
       <BottomNavigation currentTab="home" />
 
       {/* AR Guide Modal */}
-      {showARGuide && (
-        <ARSwingGuide onClose={() => setShowARGuide(false)} />
-      )}
+      {showARGuide ? (
+        <ARSwingGuide onClose={() => {
+          setShowARGuide(false);
+        }} />
+      ) : null}
     </div>
   );
 }

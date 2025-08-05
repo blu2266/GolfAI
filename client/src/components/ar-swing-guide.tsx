@@ -36,6 +36,8 @@ export function ARSwingGuide({ onClose }: ARSwingGuideProps) {
   const [analysis, setAnalysis] = useState<SwingAnalysis | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
+  console.log('ARSwingGuide component rendered');
+
   // Initialize camera
   useEffect(() => {
     const initCamera = async () => {
