@@ -165,34 +165,44 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
   if (isProcessing) {
     return (
       <div className="space-y-6">
-        <div className="text-center py-8 glass rounded-2xl">
-          {/* Futuristic Processing Animation */}
-          <div className="relative h-32 mb-6 flex items-center justify-center">
-            <div className="absolute w-32 h-32">
-              <div className="absolute inset-0 border-4 border-neon-green/30 rounded-full animate-pulse"></div>
-              <div className="absolute inset-0 border-4 border-neon-green border-t-transparent rounded-full animate-spin"></div>
-              <div className="absolute inset-2 border-4 border-electric-blue/30 rounded-full animate-pulse"></div>
-              <div className="absolute inset-2 border-4 border-electric-blue border-r-transparent rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
-              <div className="absolute inset-4 border-4 border-cyber-purple/30 rounded-full animate-pulse"></div>
-              <div className="absolute inset-4 border-4 border-cyber-purple border-b-transparent rounded-full animate-spin" style={{ animationDuration: '2s' }}></div>
+        <div className="text-center py-8">
+          {/* Golf Ball Animation */}
+          <div className="relative h-32 mb-6">
+            <div className="absolute inset-x-0 bottom-0 h-1 bg-golf-green/30 rounded-full mx-8"></div>
+            <div className="absolute left-1/2 transform -translate-x-1/2 animate-bounce">
+              <div className="w-12 h-12 bg-white rounded-full shadow-lg relative overflow-hidden">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-2 h-2 bg-slate-300 rounded-full"></div>
+                  <div className="w-1 h-1 bg-slate-300 rounded-full absolute left-3 top-3"></div>
+                  <div className="w-1 h-1 bg-slate-300 rounded-full absolute right-3 top-3"></div>
+                  <div className="w-1 h-1 bg-slate-300 rounded-full absolute left-3 bottom-3"></div>
+                  <div className="w-1 h-1 bg-slate-300 rounded-full absolute right-3 bottom-3"></div>
+                </div>
+              </div>
             </div>
-            <div className="relative z-10 w-16 h-16 gradient-primary rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(0,255,127,0.6)]">
-              <div className="text-2xl font-bold text-deep-space animate-pulse-neon">AI</div>
+            {/* Golf Club with swing animation */}
+            <div className="absolute left-1/2 top-0 transform -translate-x-1/2 origin-bottom animate-golf-swing">
+              <div className="w-1 h-20 bg-slate-600 rounded-full"></div>
+              <div className="w-6 h-3 bg-slate-700 absolute -top-1 -left-2.5 rounded-t-lg"></div>
+            </div>
+            {/* Ball trail effect */}
+            <div className="absolute left-1/2 bottom-0 transform -translate-x-1/2">
+              <div className="w-3 h-3 bg-white rounded-full shadow-sm animate-ball-trail"></div>
             </div>
           </div>
           
-          <h2 className="text-xl font-bold neon-green mb-2">NEURAL PROCESSING</h2>
-          <p className="text-foreground/70 text-sm mb-6">
+          <h2 className="text-xl font-bold text-deep-navy mb-2">Analyzing Your Swing</h2>
+          <p className="text-slate-600 text-sm mb-6">
             {[
-              "Initializing motion vectors...",
-              "Quantum speed analysis...",
-              "Biomechanical mapping...",
-              "Optimizing trajectory data..."
-            ][processingStep] || "Neural network analyzing swing data..."}
+              "Tracking club path...",
+              "Measuring swing speed...",
+              "Analyzing body mechanics...",
+              "Calculating optimal angles..."
+            ][processingStep] || "Our AI coach is studying your technique..."}
           </p>
           
           <Progress value={uploadProgress} className="w-full mb-4" />
-          <p className="text-xs text-foreground/50">
+          <p className="text-xs text-slate-500">
             {processingSteps[processingStep] || "Processing..."}
           </p>
         </div>
@@ -203,25 +213,25 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
               key={index}
               className={`flex items-center space-x-3 p-3 rounded-lg border transition-all ${
                 index < processingStep
-                  ? "glass border-neon-green/50"
+                  ? "bg-white border-slate-200"
                   : index === processingStep
-                  ? "glass border-cyber-purple holographic"
-                  : "glass opacity-50"
+                  ? "bg-golden/10 border-golden/30"
+                  : "bg-white border-slate-200 opacity-50"
               }`}
             >
               <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
                 index < processingStep
-                  ? "gradient-primary"
+                  ? "bg-golf-green"
                   : index === processingStep
-                  ? "border-2 border-cyber-purple border-t-transparent animate-spin"
-                  : "bg-glass-white"
+                  ? "border-2 border-golden border-t-transparent animate-spin"
+                  : "bg-slate-300"
               }`}>
                 {index < processingStep ? (
-                  <Check className="w-4 h-4 text-deep-space" />
+                  <Check className="w-4 h-4 text-white" />
                 ) : index === processingStep ? null : null}
               </div>
-              <span className={`text-sm font-medium ${
-                index <= processingStep ? "text-foreground" : "text-foreground/50"
+              <span className={`text-sm ${
+                index <= processingStep ? "text-slate-700" : "text-slate-500"
               }`}>
                 {step}
               </span>
@@ -246,32 +256,32 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
         <label
           htmlFor="video-upload"
           onClick={() => fileInputRef.current?.click()}
-          className="block w-full glass rounded-2xl p-8 text-center cursor-pointer hover:scale-[1.02] transition-all duration-200 gradient-border"
+          className="block w-full border-2 border-dashed border-golf-green/30 rounded-2xl bg-golf-green/5 p-8 text-center cursor-pointer hover:border-golf-green/50 hover:bg-golf-green/10 transition-all duration-200"
         >
           <div className="space-y-4">
-            <div className="w-16 h-16 gradient-primary rounded-full flex items-center justify-center mx-auto shadow-[0_0_30px_rgba(0,255,127,0.4)] animate-pulse-neon">
-              <CloudUpload className="text-deep-space text-2xl w-8 h-8" />
+            <div className="w-16 h-16 bg-golf-green/20 rounded-full flex items-center justify-center mx-auto">
+              <CloudUpload className="text-golf-green text-2xl w-8 h-8" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-foreground mb-1">UPLOAD SWING DATA</h3>
-              <p className="text-sm text-foreground/70">Access device storage or camera module</p>
+              <h3 className="text-lg font-semibold text-deep-navy mb-1">Upload Your Swing Video</h3>
+              <p className="text-sm text-slate-600">Tap to select from gallery or camera</p>
             </div>
-            <div className="text-xs text-foreground/50">
-              Supported: MP4, MOV, AVI • Max capacity: 100MB
+            <div className="text-xs text-slate-500">
+              Supports MP4, MOV, AVI • Max 100MB
             </div>
           </div>
         </label>
       </div>
 
       {selectedFile && (
-        <Card className="glass p-4 gradient-border">
+        <Card className="p-4">
           <div className="flex items-center space-x-3 mb-4">
-            <div className="w-12 h-12 gradient-accent rounded-lg flex items-center justify-center shadow-[0_0_20px_rgba(59,130,246,0.3)]">
-              <Video className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 bg-slate-200 rounded-lg flex items-center justify-center">
+              <Video className="w-6 h-6 text-slate-600" />
             </div>
             <div className="flex-1">
-              <h4 className="font-semibold text-sm text-foreground">{selectedFile.name}</h4>
-              <p className="text-xs text-foreground/60">
+              <h4 className="font-semibold text-sm text-deep-navy">{selectedFile.name}</h4>
+              <p className="text-xs text-slate-600">
                 {(selectedFile.size / (1024 * 1024)).toFixed(1)} MB
               </p>
             </div>
@@ -279,15 +289,15 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
           <Button
             onClick={handleUpload}
             disabled={uploadMutation.isPending}
-            className="w-full gradient-primary text-deep-space font-bold hover:scale-105 transition-transform shadow-[0_0_30px_rgba(0,255,127,0.4)]"
+            className="w-full bg-golf-green hover:bg-golf-green/90 text-white"
           >
             {uploadMutation.isPending ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                PROCESSING...
+                Analyzing...
               </>
             ) : (
-              "INITIATE ANALYSIS"
+              "Analyze Swing"
             )}
           </Button>
         </Card>
@@ -296,10 +306,10 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
       {/* Camera Capture Button */}
       <Button
         onClick={handleCamera}
-        className="w-full gradient-accent text-white py-4 h-auto font-bold shadow-[0_0_40px_rgba(59,130,246,0.4)] hover:scale-105 transition-transform"
+        className="w-full bg-deep-navy text-white py-4 h-auto font-semibold shadow-lg hover:bg-deep-navy/90"
       >
         <Video className="w-5 h-5 mr-3" />
-        CAPTURE NEW SEQUENCE
+        Record New Swing
       </Button>
 
       {/* Sample Analysis Button */}
@@ -307,17 +317,17 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
         onClick={handleSampleAnalysis}
         disabled={sampleMutation.isPending}
         variant="outline"
-        className="w-full glass border-2 border-cyber-purple text-cyber-purple py-4 h-auto font-bold hover:scale-105 transition-transform hover:shadow-[0_0_30px_rgba(168,85,247,0.4)]"
+        className="w-full border-2 border-golf-green text-golf-green py-4 h-auto font-semibold hover:bg-golf-green hover:text-white"
       >
         {sampleMutation.isPending ? (
           <>
             <Loader2 className="w-5 h-5 mr-3 animate-spin" />
-            LOADING...
+            Loading...
           </>
         ) : (
           <>
             <Play className="w-5 h-5 mr-3" />
-            DEMO ANALYSIS MODE
+            Try Sample Analysis
           </>
         )}
       </Button>
