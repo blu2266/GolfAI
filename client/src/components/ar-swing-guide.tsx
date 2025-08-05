@@ -95,21 +95,30 @@ export function ARSwingGuide({ onClose }: ARSwingGuideProps) {
   const startAnalysis = () => {
     if (!isActive || !videoRef.current || !canvasRef.current) return;
 
+    let lastAnalysisTime = 0;
+    const ANALYSIS_INTERVAL = 1000; // Update analysis every 1 second
+
     const analyze = () => {
       if (!isActive) return;
 
-      // Simulate real-time analysis
-      const mockAnalysis: SwingAnalysis = {
-        posture: Math.random() > 0.7 ? 'good' : Math.random() > 0.3 ? 'warning' : 'error',
-        alignment: Math.random() > 0.6 ? 'good' : Math.random() > 0.3 ? 'warning' : 'error',
-        clubPosition: Math.random() > 0.8 ? 'good' : Math.random() > 0.4 ? 'warning' : 'error',
-        confidence: Math.random() * 0.4 + 0.6 // 60-100%
-      };
+      const currentTime = Date.now();
+      
+      // Only update analysis every ANALYSIS_INTERVAL milliseconds
+      if (currentTime - lastAnalysisTime >= ANALYSIS_INTERVAL) {
+        // Simulate real-time analysis with more stable values
+        const mockAnalysis: SwingAnalysis = {
+          posture: Math.random() > 0.7 ? 'good' : Math.random() > 0.3 ? 'warning' : 'error',
+          alignment: Math.random() > 0.6 ? 'good' : Math.random() > 0.3 ? 'warning' : 'error',
+          clubPosition: Math.random() > 0.8 ? 'good' : Math.random() > 0.4 ? 'warning' : 'error',
+          confidence: Math.round((Math.random() * 0.3 + 0.65) * 100) / 100 // 65-95%, rounded to 2 decimals
+        };
 
-      setAnalysis(mockAnalysis);
-      setIsAnalyzing(true);
+        setAnalysis(mockAnalysis);
+        setIsAnalyzing(true);
+        lastAnalysisTime = currentTime;
+      }
 
-      // Draw overlay
+      // Draw overlay continuously for smooth visuals
       drawOverlay();
 
       // Continue analysis
@@ -245,7 +254,7 @@ export function ARSwingGuide({ onClose }: ARSwingGuideProps) {
             {analysis && (
               <Badge 
                 variant="outline" 
-                className={`bg-black/50 border-white/20 text-white`}
+                className={`bg-black/50 border-white/20 text-white transition-all duration-500`}
               >
                 Confidence: {Math.round(analysis.confidence * 100)}%
               </Badge>
@@ -269,19 +278,19 @@ export function ARSwingGuide({ onClose }: ARSwingGuideProps) {
             <Card className="mb-4 bg-black/80 border-white/20">
               <CardContent className="p-3">
                 <div className="grid grid-cols-3 gap-3 text-center">
-                  <div className={`${getStatusColor(analysis.posture)}`}>
+                  <div className={`${getStatusColor(analysis.posture)} transition-colors duration-500`}>
                     <div className="flex items-center justify-center mb-1">
                       {getStatusIcon(analysis.posture)}
                     </div>
                     <div className="text-xs font-medium text-white">Posture</div>
                   </div>
-                  <div className={`${getStatusColor(analysis.alignment)}`}>
+                  <div className={`${getStatusColor(analysis.alignment)} transition-colors duration-500`}>
                     <div className="flex items-center justify-center mb-1">
                       {getStatusIcon(analysis.alignment)}
                     </div>
                     <div className="text-xs font-medium text-white">Alignment</div>
                   </div>
-                  <div className={`${getStatusColor(analysis.clubPosition)}`}>
+                  <div className={`${getStatusColor(analysis.clubPosition)} transition-colors duration-500`}>
                     <div className="flex items-center justify-center mb-1">
                       {getStatusIcon(analysis.clubPosition)}
                     </div>
