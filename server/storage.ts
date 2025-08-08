@@ -4,6 +4,7 @@ import {
   clubs, 
   userPreferences,
   promptConfigurations,
+  aiSettings,
   type User, 
   type UpsertUser, 
   type SwingAnalysis, 
@@ -13,7 +14,9 @@ import {
   type UserPreferences,
   type InsertUserPreferences,
   type PromptConfiguration,
-  type InsertPromptConfiguration
+  type InsertPromptConfiguration,
+  type AISettings,
+  type InsertAISettings
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc } from "drizzle-orm";
@@ -48,6 +51,10 @@ export interface IStorage {
   createPromptConfiguration(config: InsertPromptConfiguration): Promise<PromptConfiguration>;
   updatePromptConfiguration(id: string, updates: Partial<PromptConfiguration>): Promise<PromptConfiguration | undefined>;
   setActivePromptConfiguration(id: string): Promise<void>;
+  
+  // AI settings (admin only)
+  getAISettings(): Promise<AISettings | undefined>;
+  updateAISettings(settings: Partial<InsertAISettings>): Promise<AISettings>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -248,6 +255,40 @@ export class DatabaseStorage implements IStorage {
       .update(promptConfigurations)
       .set({ isActive: true })
       .where(eq(promptConfigurations.id, id));
+  }
+  
+  // AI settings
+  async getAISettings(): Promise<AISettings | undefined> {
+    const [settings] = await db
+      .select()
+      .from(aiSettings)
+      .limit(1);
+    return settings;
+  }
+  
+  async updateAISettings(settings: Partial<InsertAISettings>): Promise<AISettings> {
+    const existing = await this.getAISettings();
+    
+    if (existing) {
+      const [updated] = await db
+        .update(aiSettings)
+        .set({
+          ...settings,
+          updatedAt: new Date(),
+        })
+        .where(eq(aiSettings.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db
+        .insert(aiSettings)
+        .values([{
+          ...settings,
+          provider: settings.provider || "gemini",
+        }])
+        .returning();
+      return created;
+    }
   }
 }
 

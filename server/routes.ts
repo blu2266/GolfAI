@@ -6,7 +6,7 @@ import fs from "fs";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { insertSwingAnalysisSchema, insertClubSchema, insertUserPreferencesSchema } from "@shared/schema";
-import { analyzeGolfSwing } from "./gemini";
+import { analyzeSwingWithProvider } from "./aiProvider";
 import { extractFramesFromVideo, getFrameUrl, createFullSwingGif } from "./videoFrameExtractor";
 
 const upload = multer({
@@ -99,8 +99,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get video file path for Gemini analysis
       const videoPath = req.file.path;
 
-      // Analyze with Gemini
-      const analysisResult = await analyzeGolfSwing(videoPath);
+      // Analyze with selected AI provider (Gemini or OpenAI)
+      const analysisResult = await analyzeSwingWithProvider(videoPath);
 
       // Create analysis record first
       const analysisData = {
@@ -458,6 +458,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error activating prompt:", error);
       res.status(500).json({ message: "Failed to activate prompt" });
+    }
+  });
+
+  // AI settings routes (admin only)
+  app.get('/api/admin/ai-settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      
+      const settings = await storage.getAISettings();
+      res.json(settings || { provider: 'gemini' });
+    } catch (error) {
+      console.error("Error fetching AI settings:", error);
+      res.status(500).json({ message: "Failed to fetch AI settings" });
+    }
+  });
+
+  app.put('/api/admin/ai-settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      
+      const { provider } = req.body;
+      if (!provider || !['gemini', 'openai'].includes(provider)) {
+        return res.status(400).json({ message: "Invalid AI provider" });
+      }
+      
+      const settings = await storage.updateAISettings({ 
+        provider,
+        updatedBy: user.id 
+      });
+      res.json(settings);
+    } catch (error) {
+      console.error("Error updating AI settings:", error);
+      res.status(500).json({ message: "Failed to update AI settings" });
     }
   });
 

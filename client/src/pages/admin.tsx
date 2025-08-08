@@ -10,8 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Settings, Save, Plus, Edit2, Check, X } from "lucide-react";
-import type { PromptConfiguration } from "@shared/schema";
+import { Settings, Save, Plus, Edit2, Check, X, Cpu, Sparkles } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import type { PromptConfiguration, AISettings } from "@shared/schema";
 
 export default function Admin() {
   const { user } = useAuth();
@@ -22,6 +23,10 @@ export default function Admin() {
 
   const { data: prompts, isLoading } = useQuery<PromptConfiguration[]>({
     queryKey: ["/api/admin/prompts"],
+  });
+
+  const { data: aiSettings } = useQuery<AISettings>({
+    queryKey: ["/api/admin/ai-settings"],
   });
 
   const activePrompt = prompts?.find(p => p.isActive);
@@ -95,6 +100,26 @@ export default function Admin() {
     },
   });
 
+  const updateAIProviderMutation = useMutation({
+    mutationFn: async (provider: string) => {
+      await apiRequest("PUT", "/api/admin/ai-settings", { provider });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "AI provider updated successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/ai-settings"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update AI provider",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Check if user is admin
   if (!(user as any)?.isAdmin) {
     return (
@@ -140,7 +165,66 @@ export default function Admin() {
       </header>
 
       {/* Content */}
-      <main className="max-w-4xl mx-auto px-4 py-6 pb-24">
+      <main className="max-w-4xl mx-auto px-4 py-6 pb-24 space-y-6">
+        {/* AI Provider Settings Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Cpu className="w-5 h-5" />
+              <span>AI Provider Settings</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="ai-provider">Select AI Provider</Label>
+                <Select
+                  value={aiSettings?.provider || "gemini"}
+                  onValueChange={(value) => updateAIProviderMutation.mutate(value)}
+                >
+                  <SelectTrigger id="ai-provider" className="w-full mt-2">
+                    <SelectValue placeholder="Select provider" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="gemini">
+                      <div className="flex items-center space-x-2">
+                        <Sparkles className="w-4 h-4" />
+                        <span>Google Gemini 2.5 Pro</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="openai">
+                      <div className="flex items-center space-x-2">
+                        <Cpu className="w-4 h-4" />
+                        <span>OpenAI ChatGPT-5 (GPT-4o)</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg">
+                {aiSettings?.provider === "openai" ? (
+                  <div>
+                    <strong>ChatGPT-5 (GPT-4o)</strong> - OpenAI's latest multimodal model with advanced video analysis capabilities.
+                    <br />
+                    <span className="text-xs text-slate-500 mt-1 block">
+                      Requires OPENAI_API_KEY environment variable
+                    </span>
+                  </div>
+                ) : (
+                  <div>
+                    <strong>Google Gemini 2.5 Pro</strong> - Google's advanced AI model optimized for multimodal understanding and video analysis.
+                    <br />
+                    <span className="text-xs text-slate-500 mt-1 block">
+                      Requires GEMINI_API_KEY environment variable
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Prompt Configuration Card */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">

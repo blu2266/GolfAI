@@ -27,6 +27,15 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// AI provider settings for admin control
+export const aiSettings = pgTable("ai_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  provider: text("provider").notNull().default("gemini"), // "gemini" or "openai"
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  updatedBy: varchar("updated_by").references(() => users.id),
+});
+
 // Prompt configurations table for admin control over AI prompts
 export const promptConfigurations = pgTable("prompt_configurations", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -150,6 +159,12 @@ export const insertPromptConfigurationSchema = createInsertSchema(promptConfigur
   updatedAt: true,
 });
 
+export const insertAISettingsSchema = createInsertSchema(aiSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Type exports for Replit Auth
 export type User = typeof users.$inferSelect;
 export type UpsertUser = z.infer<typeof upsertUserSchema>;
@@ -162,6 +177,8 @@ export type UserPreferences = typeof userPreferences.$inferSelect;
 export type InsertUserPreferences = z.infer<typeof insertUserPreferencesSchema>;
 export type PromptConfiguration = typeof promptConfigurations.$inferSelect;
 export type InsertPromptConfiguration = z.infer<typeof insertPromptConfigurationSchema>;
+export type AISettings = typeof aiSettings.$inferSelect;
+export type InsertAISettings = z.infer<typeof insertAISettingsSchema>;
 
 // Define relationships
 export const userRelations = relations(users, ({ many, one }) => ({

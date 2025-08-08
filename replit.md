@@ -100,6 +100,16 @@ The application follows a full-stack architecture with a React frontend, Express
 
 ## Recent Changes (January 2025)
 
+### AI Provider Selection (Latest - January 2025)
+- **Multiple AI Providers**: Added support for both Google Gemini and OpenAI ChatGPT-5 (GPT-4o)
+- **Admin Configuration**: Admins can switch between AI providers in the admin settings
+- **Provider Abstraction**: Created unified AI provider interface for seamless switching
+- **Database Schema**: Added ai_settings table to store provider preferences
+- **API Endpoints**: `/api/admin/ai-settings` for managing AI provider selection
+- **UI Update**: Admin panel now includes provider selection dropdown with descriptions
+
+## Recent Changes (January 2025)
+
 ### AR Swing Guidance Feature (Latest)
 - **AR Overlay System**: Real-time camera-based swing guidance with position overlays
 - **Live Analysis**: Real-time posture, alignment, and club position feedback

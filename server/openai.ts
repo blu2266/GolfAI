@@ -1,11 +1,13 @@
 import OpenAI from "openai";
+import * as fs from "fs";
+import * as path from "path";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ 
-  apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_ENV_VAR || "default_key" 
+  apiKey: process.env.OPENAI_API_KEY || ""
 });
 
-export async function analyzeGolfSwing(base64Video: string): Promise<{
+export async function analyzeGolfSwingWithOpenAI(videoPath: string, prompt: string): Promise<{
   overallScore: number;
   overallFeedback: string;
   swingPhases: Array<{
@@ -28,61 +30,32 @@ export async function analyzeGolfSwing(base64Video: string): Promise<{
     priority: 'High Impact' | 'Medium Impact' | 'Low Impact';
     category: string;
   }>;
+  ballMetrics?: {
+    ballSpeed?: string;
+    estimatedDistance?: string;
+    launchAngle?: string;
+    hangTime?: string;
+    curve?: string;
+  };
 }> {
   try {
+    // Read video file and convert to base64
+    const videoBuffer = fs.readFileSync(videoPath);
+    const base64Video = videoBuffer.toString('base64');
+    
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: `You are a professional golf instructor and swing analyst. Analyze the golf swing video and provide detailed feedback in JSON format. 
-
-          Analyze these key aspects:
-          1. Backswing mechanics (shoulder turn, club position, balance)
-          2. Downswing sequence (hip rotation, arm drop, weight transfer)
-          3. Impact position (club face, body position, ball contact)
-          4. Follow-through (extension, balance, finish position)
-
-          Provide scores from 1-10 for each phase and overall. Include specific, actionable recommendations.
-
-          Return JSON with this exact structure:
-          {
-            "overallScore": number,
-            "overallFeedback": "string",
-            "swingPhases": [
-              {
-                "name": "string",
-                "timestamp": "string (e.g., '0.2s - 0.8s')",
-                "score": number,
-                "feedback": "string",
-                "strengths": ["string"],
-                "improvements": ["string"]
-              }
-            ],
-            "keyMetrics": [
-              {
-                "label": "string",
-                "value": "string",
-                "change": "string (optional)",
-                "changeDirection": "up|down|neutral (optional)"
-              }
-            ],
-            "recommendations": [
-              {
-                "title": "string",
-                "description": "string",
-                "priority": "High Impact|Medium Impact|Low Impact",
-                "category": "string"
-              }
-            ]
-          }`
+          content: prompt || `You are a professional golf instructor and swing analyst. Analyze the golf swing video and provide detailed feedback in JSON format.`
         },
         {
           role: "user",
           content: [
             {
               type: "text",
-              text: "Please analyze this golf swing video and provide detailed technical feedback focusing on swing mechanics, timing, and areas for improvement."
+              text: "Please analyze this golf swing video and provide detailed technical feedback."
             },
             {
               type: "image_url",
@@ -94,7 +67,7 @@ export async function analyzeGolfSwing(base64Video: string): Promise<{
         },
       ],
       response_format: { type: "json_object" },
-      max_tokens: 2000,
+      max_tokens: 4000,
     });
 
     const result = JSON.parse(response.choices[0].message.content || "{}");
@@ -128,10 +101,11 @@ export async function analyzeGolfSwing(base64Video: string): Promise<{
           priority: "High Impact" as const,
           category: "Swing Mechanics"
         }
-      ]
+      ],
+      ballMetrics: result.ballMetrics
     };
   } catch (error) {
     console.error("OpenAI analysis error:", error);
-    throw new Error("Failed to analyze golf swing: " + (error as Error).message);
+    throw new Error("Failed to analyze golf swing with OpenAI: " + (error as Error).message);
   }
 }
