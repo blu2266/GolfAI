@@ -48,7 +48,7 @@ export default function Home() {
             <img 
               src={golfCartImage} 
               alt="SwingAI Logo" 
-              className="w-8 h-8 object-contain"
+              className="w-12 h-12 object-contain"
             />
             <h1 className="text-xl font-bold text-deep-navy">SwingAI</h1>
           </div>
