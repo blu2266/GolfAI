@@ -45,9 +45,11 @@ export default function Home() {
       <header className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-golf-green rounded-lg flex items-center justify-center">
-              <div className="w-3 h-3 bg-white rounded-full"></div>
-            </div>
+            <img 
+              src={golfCartImage} 
+              alt="SwingAI Logo" 
+              className="w-8 h-8 object-contain"
+            />
             <h1 className="text-xl font-bold text-deep-navy">SwingAI</h1>
           </div>
           <button className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
@@ -65,13 +67,6 @@ export default function Home() {
         {!showResults ? (
           <section className="p-4 space-y-6">
             <div className="text-center py-4">
-              <div className="mb-6 flex justify-center">
-                <img 
-                  src={golfCartImage} 
-                  alt="Golf cart on green grass" 
-                  className="w-32 h-32 object-contain"
-                />
-              </div>
               <h2 className="text-2xl font-bold text-deep-navy mb-2">Analyze Your Golf Swing</h2>
               <p className="text-slate-600 text-sm">Upload a video and get AI-powered insights to improve your game</p>
             </div>
