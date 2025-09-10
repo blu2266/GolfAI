@@ -11,6 +11,7 @@ import { VideoPlayer } from "@/components/video-player";
 import { ImageModal } from "@/components/ui/image-modal";
 import { ArrowLeft, Star, TrendingUp, Lightbulb, ArrowRight, Target, Save, X, ThumbsUp, Wrench, Camera, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getVideoUrl, getPhaseGifUrl, getFullSwingGifUrl } from "@/lib/media-utils";
 import type { SwingAnalysis, Club } from "@shared/schema";
 
 interface AnalysisResultsProps {
@@ -123,9 +124,10 @@ export function AnalysisResults({ analysisId, onBack }: AnalysisResultsProps) {
 
       {/* Video Player */}
       <VideoPlayer 
-        videoSrc={analysis.videoPath.startsWith("sample") ? undefined : `/api/videos/${analysis.videoPath.split('/').pop()}`}
+        videoSrc={analysis.videoPath.startsWith("sample") ? undefined : getVideoUrl(analysis)}
         className="mx-4"
         analysisId={analysis.id}
+        analysis={analysis}
       />
 
       {/* Overall Score */}
@@ -299,11 +301,11 @@ export function AnalysisResults({ analysisId, onBack }: AnalysisResultsProps) {
                 <div className="bg-black/20 h-64 md:h-80 flex items-center justify-center">
                   {analysis.frameExtractions && analysis.frameExtractions.find(frame => frame.timestamp === phase.timestamp) ? (
                     <img 
-                      src={`/api/frames/${analysis.id}/${phase.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}.gif`}
+                      src={getPhaseGifUrl(analysis, phase.name)}
                       alt={`${phase.name} motion`}
                       className="w-full h-full object-contain cursor-pointer"
                       onClick={() => setExpandedImage({ 
-                        src: `/api/frames/${analysis.id}/${phase.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}.gif`,
+                        src: getPhaseGifUrl(analysis, phase.name),
                         alt: `${phase.name} motion`
                       })}
                       onError={(e) => {

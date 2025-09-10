@@ -583,6 +583,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Serve objects from object storage for saved analyses
+  app.get("/objects/:objectPath(*)", isAuthenticated, async (req: any, res) => {
+    const { ObjectStorageService, ObjectNotFoundError } = await import("./objectStorage");
+    const objectStorageService = new ObjectStorageService();
+    const userId = req.user?.claims?.sub;
+    
+    try {
+      const objectFile = await objectStorageService.getObjectEntityFile(req.path);
+      
+      // For swing analysis media, check if the user owns the analysis
+      const analysisMatch = req.path.match(/\/objects\/analyses\/([^\/]+)\//);
+      if (analysisMatch) {
+        const analysisId = analysisMatch[1];
+        const analysis = await storage.getSwingAnalysis(analysisId);
+        
+        if (!analysis || analysis.userId !== userId) {
+          return res.status(403).json({ message: "Forbidden" });
+        }
+      }
+      
+      // Download the object to the response
+      await objectStorageService.downloadObject(objectFile, res);
+    } catch (error) {
+      console.error("Error serving object:", error);
+      if (error instanceof ObjectNotFoundError) {
+        return res.status(404).json({ message: "Object not found" });
+      }
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

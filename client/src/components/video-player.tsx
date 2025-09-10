@@ -1,14 +1,16 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Play, Pause, RotateCcw } from "lucide-react";
+import { getFullSwingGifUrl } from "@/lib/media-utils";
 
 interface VideoPlayerProps {
   videoSrc?: string;
   className?: string;
   analysisId?: string;
+  analysis?: any;
 }
 
-export function VideoPlayer({ videoSrc, className = "", analysisId }: VideoPlayerProps) {
+export function VideoPlayer({ videoSrc, className = "", analysisId, analysis }: VideoPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -66,10 +68,11 @@ export function VideoPlayer({ videoSrc, className = "", analysisId }: VideoPlaye
 
   // Show GIF preview if analysisId is provided
   if (analysisId && videoSrc?.startsWith('/api/videos/')) {
+    const gifUrl = analysis ? getFullSwingGifUrl(analysis) : `/api/frames/${analysisId}/full_swing.gif`;
     return (
       <div className={`relative bg-black rounded-2xl overflow-hidden ${className}`}>
         <img 
-          src={`/api/frames/${analysisId}/full_swing.gif`}
+          src={gifUrl}
           alt="Golf swing preview"
           className="w-full h-auto"
           onError={(e) => {
