@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import type { SwingAnalysis } from "@shared/schema";
 import { Clock, Star, Camera } from "lucide-react";
+import golfCartImage from "@assets/image_1757541518772.png";
 
 export default function Home() {
   const [showResults, setShowResults] = useState(false);
@@ -64,6 +65,13 @@ export default function Home() {
         {!showResults ? (
           <section className="p-4 space-y-6">
             <div className="text-center py-4">
+              <div className="mb-6 flex justify-center">
+                <img 
+                  src={golfCartImage} 
+                  alt="Golf cart on green grass" 
+                  className="w-32 h-32 object-contain"
+                />
+              </div>
               <h2 className="text-2xl font-bold text-deep-navy mb-2">Analyze Your Golf Swing</h2>
               <p className="text-slate-600 text-sm">Upload a video and get AI-powered insights to improve your game</p>
             </div>
