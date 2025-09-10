@@ -279,68 +279,75 @@ export function AnalysisResults({ analysisId, onBack }: AnalysisResultsProps) {
       )}
 
       {/* Swing Breakdown */}
-      <div className="space-y-6">
-        <h3 className="text-lg font-bold text-deep-navy px-4">Swing Breakdown</h3>
+      <div className="p-4 space-y-4">
+        <h3 className="text-lg font-bold text-deep-navy">Swing Breakdown</h3>
         
         {analysis.swingPhases.map((phase, index) => (
-          <div key={index} className="mx-4">
-            <Card className="overflow-hidden bg-deep-navy text-white">
-              {/* Phase Header and GIF */}
-              <div className="relative">
-                <h4 className="absolute top-4 left-4 text-2xl font-bold text-golf-green z-10">
+          <Card key={index} className="overflow-hidden">
+            {/* Phase Header with Score */}
+            <div className="bg-gradient-to-r from-golf-green/10 to-transparent p-4 border-b">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xl font-bold text-deep-navy">
                   {phase.name}
                 </h4>
-                <div className="absolute top-4 right-4 z-10 bg-black/50 rounded-lg px-3 py-1">
+                <div className="flex items-baseline space-x-1">
                   <span className={`text-2xl font-bold ${getScoreColor(phase.score)}`}>
                     {phase.score}
                   </span>
-                  <span className="text-white/70 text-sm">/10</span>
+                  <span className="text-slate-500 text-sm">/10</span>
                 </div>
-                
-                {/* Large GIF Display */}
-                <div className="bg-black/20 h-64 md:h-80 flex items-center justify-center">
-                  {analysis.frameExtractions && analysis.frameExtractions.find(frame => frame.timestamp === phase.timestamp) ? (
-                    <img 
-                      src={getPhaseGifUrl(analysis, phase.name)}
-                      alt={`${phase.name} motion`}
-                      className="w-full h-full object-contain cursor-pointer"
-                      onClick={() => setExpandedImage({ 
-                        src: getPhaseGifUrl(analysis, phase.name),
-                        alt: `${phase.name} motion`
-                      })}
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                      }}
-                    />
-                  ) : null}
-                  <div className="text-center hidden">
-                    <div className="w-20 h-20 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <Camera className="w-10 h-10 text-white/30" />
+              </div>
+            </div>
+            
+            {/* GIF Display */}
+            {analysis.frameExtractions && analysis.frameExtractions.find(frame => frame.timestamp === phase.timestamp) && (
+              <div className="bg-gradient-to-b from-slate-50 to-white p-4">
+                <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+                  <img 
+                    src={getPhaseGifUrl(analysis, phase.name)}
+                    alt={`${phase.name} motion`}
+                    className="w-full h-48 md:h-64 object-contain cursor-pointer hover:scale-105 transition-transform duration-200"
+                    onClick={() => setExpandedImage({ 
+                      src: getPhaseGifUrl(analysis, phase.name),
+                      alt: `${phase.name} motion`
+                    })}
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                    }}
+                  />
+                  <div className="text-center hidden p-8">
+                    <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <Camera className="w-8 h-8 text-slate-400" />
                     </div>
-                    <p className="text-white/50 text-sm">No preview available</p>
+                    <p className="text-slate-500 text-sm">Preview not available</p>
                   </div>
                 </div>
               </div>
+            )}
+            
+            <CardContent className="pt-6 pb-6 space-y-5">
+              {/* Feedback Summary */}
+              <div className="bg-slate-50 rounded-lg p-4 border border-slate-100">
+                <p className="text-sm text-slate-700 leading-relaxed">{phase.feedback}</p>
+              </div>
               
-              <CardContent className="p-6 space-y-4">
-                {/* Feedback Summary */}
-                <div className="bg-white/10 rounded-lg p-4">
-                  <p className="text-sm text-white/90 leading-relaxed">{phase.feedback}</p>
-                </div>
-                
+              {/* Strengths and Improvements Grid */}
+              <div className="grid md:grid-cols-2 gap-4">
                 {/* Positives Section */}
                 {phase.strengths && phase.strengths.length > 0 && (
-                  <div>
+                  <div className="bg-golf-green/5 rounded-lg p-4 border border-golf-green/20">
                     <div className="flex items-center space-x-2 mb-3">
-                      <ThumbsUp className="w-5 h-5 text-golf-green" />
-                      <h5 className="text-lg font-semibold text-white">Positives</h5>
+                      <div className="w-8 h-8 bg-golf-green/20 rounded-full flex items-center justify-center">
+                        <ThumbsUp className="w-4 h-4 text-golf-green" />
+                      </div>
+                      <h5 className="font-semibold text-deep-navy">Strengths</h5>
                     </div>
                     <div className="space-y-2">
                       {phase.strengths.map((strength, idx) => (
-                        <div key={idx} className="flex items-start space-x-3">
-                          <CheckCircle className="w-5 h-5 text-golf-green flex-shrink-0 mt-0.5" />
-                          <span className="text-sm text-white/90">{strength}</span>
+                        <div key={idx} className="flex items-start space-x-2">
+                          <CheckCircle className="w-4 h-4 text-golf-green flex-shrink-0 mt-0.5" />
+                          <span className="text-sm text-slate-700">{strength}</span>
                         </div>
                       ))}
                     </div>
@@ -349,24 +356,26 @@ export function AnalysisResults({ analysisId, onBack }: AnalysisResultsProps) {
                 
                 {/* Areas for Improvement Section */}
                 {phase.improvements && phase.improvements.length > 0 && (
-                  <div>
+                  <div className="bg-golden/5 rounded-lg p-4 border border-golden/20">
                     <div className="flex items-center space-x-2 mb-3">
-                      <Wrench className="w-5 h-5 text-golden" />
-                      <h5 className="text-lg font-semibold text-white">Areas for Improvement</h5>
+                      <div className="w-8 h-8 bg-golden/20 rounded-full flex items-center justify-center">
+                        <Target className="w-4 h-4 text-golden" />
+                      </div>
+                      <h5 className="font-semibold text-deep-navy">Areas to Work On</h5>
                     </div>
                     <div className="space-y-2">
                       {phase.improvements.map((improvement, idx) => (
-                        <div key={idx} className="flex items-start space-x-3">
-                          <Target className="w-5 h-5 text-golden flex-shrink-0 mt-0.5" />
-                          <span className="text-sm text-white/90">{improvement}</span>
+                        <div key={idx} className="flex items-start space-x-2">
+                          <ArrowRight className="w-4 h-4 text-golden flex-shrink-0 mt-0.5" />
+                          <span className="text-sm text-slate-700">{improvement}</span>
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
