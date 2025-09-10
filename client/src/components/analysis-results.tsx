@@ -332,8 +332,8 @@ export function AnalysisResults({ analysisId, onBack }: AnalysisResultsProps) {
                 <p className="text-sm text-slate-700 leading-relaxed">{phase.feedback}</p>
               </div>
               
-              {/* Strengths and Improvements Grid */}
-              <div className="grid md:grid-cols-2 gap-4">
+              {/* Strengths and Improvements Stacked */}
+              <div className="space-y-4">
                 {/* Positives Section */}
                 {phase.strengths && phase.strengths.length > 0 && (
                   <div className="bg-golf-green/5 rounded-lg p-4 border border-golf-green/20">
