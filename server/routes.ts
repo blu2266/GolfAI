@@ -300,14 +300,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/swing-analyses/:id/save", isAuthenticated, async (req: any, res) => {
     try {
       const { isSaved, notes, clubId } = req.body;
-      const analysis = await storage.updateSwingAnalysis(req.params.id, {
-        isSaved,
-        notes,
-        clubId
-      });
-      if (!analysis) {
+      const userId = req.user.claims.sub;
+      
+      // Get the existing analysis
+      const existingAnalysis = await storage.getSwingAnalysis(req.params.id);
+      if (!existingAnalysis) {
         return res.status(404).json({ message: "Analysis not found" });
       }
+      
+      // Check if the user owns this analysis
+      if (existingAnalysis.userId !== userId) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      
+      let updateData: any = { isSaved, notes, clubId };
+      
+      // If saving the analysis and not already saved to object storage, upload media files
+      if (isSaved && !existingAnalysis.objectStorageVideoPath) {
+        const { ObjectStorageService } = await import("./objectStorage");
+        const objectStorageService = new ObjectStorageService();
+        
+        try {
+          // Upload video to object storage
+          const privateDir = objectStorageService.getPrivateObjectDir();
+          const videoFileName = path.basename(existingAnalysis.videoPath);
+          const videoDestPath = `${privateDir}/analyses/${req.params.id}/video/${videoFileName}`;
+          
+          console.log(`Uploading video to object storage: ${videoDestPath}`);
+          const videoStoragePath = await objectStorageService.uploadFileToStorage(
+            existingAnalysis.videoPath,
+            videoDestPath
+          );
+          
+          updateData.objectStorageVideoPath = `/objects/analyses/${req.params.id}/video/${videoFileName}`;
+          
+          // Upload GIFs if they exist
+          if (existingAnalysis.frameExtractions && existingAnalysis.frameExtractions.length > 0) {
+            const framePaths: Record<string, string> = {};
+            
+            for (const extraction of existingAnalysis.frameExtractions) {
+              const frameFileName = path.basename(extraction.framePath);
+              const frameDestPath = `${privateDir}/analyses/${req.params.id}/frames/${frameFileName}`;
+              
+              // Check if the local file exists before trying to upload
+              const localFramePath = path.join('uploads', 'frames', req.params.id, frameFileName);
+              if (fs.existsSync(localFramePath)) {
+                console.log(`Uploading frame to object storage: ${frameDestPath}`);
+                await objectStorageService.uploadFileToStorage(
+                  localFramePath,
+                  frameDestPath
+                );
+                framePaths[extraction.timestamp] = `/objects/analyses/${req.params.id}/frames/${frameFileName}`;
+              }
+            }
+            
+            // Also upload the full swing GIF if it exists
+            const fullSwingGifPath = path.join('uploads', 'frames', req.params.id, 'full_swing.gif');
+            if (fs.existsSync(fullSwingGifPath)) {
+              const fullSwingDestPath = `${privateDir}/analyses/${req.params.id}/frames/full_swing.gif`;
+              console.log(`Uploading full swing GIF to object storage: ${fullSwingDestPath}`);
+              await objectStorageService.uploadFileToStorage(
+                fullSwingGifPath,
+                fullSwingDestPath
+              );
+              framePaths['full_swing'] = `/objects/analyses/${req.params.id}/frames/full_swing.gif`;
+            }
+            
+            if (Object.keys(framePaths).length > 0) {
+              updateData.objectStorageFramePaths = framePaths;
+            }
+          }
+          
+          console.log("Media files uploaded to object storage successfully");
+        } catch (uploadError) {
+          console.error("Error uploading to object storage:", uploadError);
+          // Continue with save even if upload fails
+        }
+      }
+      
+      const analysis = await storage.updateSwingAnalysis(req.params.id, updateData);
       res.json(analysis);
     } catch (error) {
       console.error("Error updating analysis:", error);
