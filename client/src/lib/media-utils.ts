@@ -1,35 +1,56 @@
-// Helper functions for handling media URLs with object storage fallback
+// Helper functions for handling media URLs - Always use authenticated backend endpoints
 
 export function getVideoUrl(analysis: any): string {
-  // Use object storage URL if available (for saved analyses)
-  if (analysis.objectStorageVideoPath) {
+  // IMPORTANT: Always use backend endpoints for security
+  // Never expose direct storage.googleapis.com URLs to the frontend
+  
+  // If saved to object storage, use the secure /objects/* endpoint
+  if (analysis.objectStorageVideoPath && analysis.objectStorageVideoPath.startsWith('/objects/')) {
+    // This endpoint requires authentication and checks ownership
     return analysis.objectStorageVideoPath;
   }
-  // Fall back to local filesystem URL
+  
+  // Fall back to local filesystem endpoint (also requires auth now)
   return `/api/videos/${analysis.videoPath.split('/').pop()}`;
 }
 
 export function getFrameUrl(analysis: any, frameName: string): string {
-  // Use object storage URL if available (for saved analyses)
+  // IMPORTANT: Always use backend endpoints for security
+  
+  // If saved to object storage, use the secure /objects/* endpoint
   if (analysis.objectStorageFramePaths) {
-    // Check if we have a URL for this specific frame
+    // Find the frame path that matches this frame name
     const frameKey = Object.keys(analysis.objectStorageFramePaths).find(key => {
-      return analysis.objectStorageFramePaths[key].includes(frameName);
+      const pathValue = analysis.objectStorageFramePaths[key];
+      return pathValue && pathValue.includes(frameName);
     });
+    
     if (frameKey && analysis.objectStorageFramePaths[frameKey]) {
-      return analysis.objectStorageFramePaths[frameKey];
+      const path = analysis.objectStorageFramePaths[frameKey];
+      // Only use if it's an internal /objects/* path, not a direct URL
+      if (path.startsWith('/objects/')) {
+        return path;
+      }
     }
   }
-  // Fall back to local filesystem URL
+  
+  // Fall back to local filesystem endpoint (also requires auth now)
   return `/api/frames/${analysis.id}/${frameName}`;
 }
 
 export function getFullSwingGifUrl(analysis: any): string {
-  // Use object storage URL if available (for saved analyses)
+  // IMPORTANT: Always use backend endpoints for security
+  
+  // If saved to object storage, use the secure /objects/* endpoint
   if (analysis.objectStorageFramePaths && analysis.objectStorageFramePaths['full_swing']) {
-    return analysis.objectStorageFramePaths['full_swing'];
+    const path = analysis.objectStorageFramePaths['full_swing'];
+    // Only use if it's an internal /objects/* path, not a direct URL
+    if (path.startsWith('/objects/')) {
+      return path;
+    }
   }
-  // Fall back to local filesystem URL
+  
+  // Fall back to local filesystem endpoint (also requires auth now)
   return `/api/frames/${analysis.id}/full_swing.gif`;
 }
 

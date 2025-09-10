@@ -9,6 +9,28 @@ import { insertSwingAnalysisSchema, insertClubSchema, insertUserPreferencesSchem
 import { analyzeSwingWithProvider } from "./aiProvider";
 import { extractFramesFromVideo, getFrameUrl, createFullSwingGif } from "./videoFrameExtractor";
 
+// Helper function to parse object storage paths
+function parseObjectPath(path: string): {
+  bucketName: string;
+  objectName: string;
+} {
+  if (!path.startsWith("/")) {
+    path = `/${path}`;
+  }
+  const pathParts = path.split("/");
+  if (pathParts.length < 3) {
+    throw new Error("Invalid path: must contain at least a bucket name");
+  }
+
+  const bucketName = pathParts[1];
+  const objectName = pathParts.slice(2).join("/");
+
+  return {
+    bucketName,
+    objectName,
+  };
+}
+
 const upload = multer({
   dest: "uploads/",
   limits: { fileSize: 100 * 1024 * 1024 }, // 100MB limit
@@ -155,43 +177,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Serve uploaded videos with optimal quality settings
-  app.get("/api/videos/:filename", (req, res) => {
+  // Serve uploaded videos with authentication and ownership check
+  app.get("/api/videos/:filename", isAuthenticated, async (req: any, res) => {
     const filename = req.params.filename;
     const videoPath = path.join("uploads", filename);
+    const userId = req.user.claims.sub;
     
-    if (fs.existsSync(videoPath)) {
-      const stat = fs.statSync(videoPath);
-      const fileSize = stat.size;
-      const range = req.headers.range;
-      
-      if (range) {
-        // Support video seeking/streaming
-        const parts = range.replace(/bytes=/, "").split("-");
-        const start = parseInt(parts[0], 10);
-        const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
-        const chunksize = (end - start) + 1;
-        const file = fs.createReadStream(videoPath, { start, end });
-        const head = {
-          'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-          'Accept-Ranges': 'bytes',
-          'Content-Length': chunksize,
-          'Content-Type': 'video/mp4',
-          'Cache-Control': 'public, max-age=3600',
-        };
-        res.writeHead(206, head);
-        file.pipe(res);
-      } else {
-        const head = {
-          'Content-Length': fileSize,
-          'Content-Type': 'video/mp4',
-          'Cache-Control': 'public, max-age=3600',
-        };
-        res.writeHead(200, head);
-        fs.createReadStream(videoPath).pipe(res);
-      }
+    // Check if video exists
+    if (!fs.existsSync(videoPath)) {
+      return res.status(404).json({ message: "Video not found" });
+    }
+    
+    // Find the analysis that owns this video
+    const analyses = await storage.getUserSwingAnalyses(userId);
+    const ownsVideo = analyses.some(analysis => 
+      analysis.videoPath === filename || 
+      analysis.videoPath === `uploads/${filename}`
+    );
+    
+    if (!ownsVideo) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+    
+    // Serve the video with streaming support
+    const stat = fs.statSync(videoPath);
+    const fileSize = stat.size;
+    const range = req.headers.range;
+    
+    if (range) {
+      // Support video seeking/streaming
+      const parts = range.replace(/bytes=/, "").split("-");
+      const start = parseInt(parts[0], 10);
+      const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+      const chunksize = (end - start) + 1;
+      const file = fs.createReadStream(videoPath, { start, end });
+      const head = {
+        'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+        'Accept-Ranges': 'bytes',
+        'Content-Length': chunksize,
+        'Content-Type': 'video/mp4',
+        'Cache-Control': 'private, max-age=3600',
+      };
+      res.writeHead(206, head);
+      file.pipe(res);
     } else {
-      res.status(404).json({ message: "Video not found" });
+      const head = {
+        'Content-Length': fileSize,
+        'Content-Type': 'video/mp4',
+        'Cache-Control': 'private, max-age=3600',
+      };
+      res.writeHead(200, head);
+      fs.createReadStream(videoPath).pipe(res);
     }
   });
 
@@ -318,6 +354,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // If saving the analysis and not already saved to object storage, upload media files
       if (isSaved && !existingAnalysis.objectStorageVideoPath) {
         const { ObjectStorageService } = await import("./objectStorage");
+        const { objectStorageClient } = await import("./objectStorage");
+        const { setObjectAclPolicy } = await import("./objectAcl");
         const objectStorageService = new ObjectStorageService();
         
         try {
@@ -331,6 +369,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             existingAnalysis.videoPath,
             videoDestPath
           );
+          
+          // Set ACL policy for the uploaded video
+          const { bucketName, objectName } = parseObjectPath(videoDestPath);
+          const bucket = objectStorageClient.bucket(bucketName);
+          const videoFile = bucket.file(objectName);
+          await setObjectAclPolicy(videoFile, {
+            owner: userId,
+            visibility: "private",
+            aclRules: []
+          });
           
           updateData.objectStorageVideoPath = `/objects/analyses/${req.params.id}/video/${videoFileName}`;
           
@@ -350,6 +398,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   localFramePath,
                   frameDestPath
                 );
+                
+                // Set ACL policy for the uploaded frame
+                const { bucketName: frameBucket, objectName: frameObject } = parseObjectPath(frameDestPath);
+                const frameBucketRef = objectStorageClient.bucket(frameBucket);
+                const frameFile = frameBucketRef.file(frameObject);
+                await setObjectAclPolicy(frameFile, {
+                  owner: userId,
+                  visibility: "private",
+                  aclRules: []
+                });
+                
                 framePaths[extraction.timestamp] = `/objects/analyses/${req.params.id}/frames/${frameFileName}`;
               }
             }
@@ -363,6 +422,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 fullSwingGifPath,
                 fullSwingDestPath
               );
+              
+              // Set ACL policy for the full swing GIF
+              const { bucketName: fullSwingBucket, objectName: fullSwingObject } = parseObjectPath(fullSwingDestPath);
+              const fullSwingBucketRef = objectStorageClient.bucket(fullSwingBucket);
+              const fullSwingFile = fullSwingBucketRef.file(fullSwingObject);
+              await setObjectAclPolicy(fullSwingFile, {
+                owner: userId,
+                visibility: "private",
+                aclRules: []
+              });
+              
               framePaths['full_swing'] = `/objects/analyses/${req.params.id}/frames/full_swing.gif`;
             }
             
@@ -571,9 +641,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Serve frame images
-  app.get('/api/frames/:analysisId/:frameName', (req, res) => {
+  // Serve frame images with authentication and ownership check
+  app.get('/api/frames/:analysisId/:frameName', isAuthenticated, async (req: any, res) => {
     const { analysisId, frameName } = req.params;
+    const userId = req.user.claims.sub;
+    
+    // Check if the user owns this analysis
+    const analysis = await storage.getSwingAnalysis(analysisId);
+    if (!analysis || analysis.userId !== userId) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+    
     const framePath = path.join('uploads', 'frames', analysisId, frameName);
     
     if (fs.existsSync(framePath)) {
@@ -583,28 +661,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Serve objects from object storage for saved analyses
+  // Serve objects from object storage with ACL-based access control
   app.get("/objects/:objectPath(*)", isAuthenticated, async (req: any, res) => {
     const { ObjectStorageService, ObjectNotFoundError } = await import("./objectStorage");
+    const { canAccessObject, ObjectPermission } = await import("./objectAcl");
     const objectStorageService = new ObjectStorageService();
     const userId = req.user?.claims?.sub;
     
     try {
       const objectFile = await objectStorageService.getObjectEntityFile(req.path);
       
-      // For swing analysis media, check if the user owns the analysis
-      const analysisMatch = req.path.match(/\/objects\/analyses\/([^\/]+)\//);
-      if (analysisMatch) {
-        const analysisId = analysisMatch[1];
-        const analysis = await storage.getSwingAnalysis(analysisId);
-        
-        if (!analysis || analysis.userId !== userId) {
+      // Check ACL-based access permission
+      const hasAccess = await canAccessObject({
+        userId,
+        objectFile,
+        requestedPermission: ObjectPermission.READ
+      });
+      
+      if (!hasAccess) {
+        // Fallback to database ownership check for backward compatibility
+        const analysisMatch = req.path.match(/\/objects\/analyses\/([^\/]+)\//);
+        if (analysisMatch) {
+          const analysisId = analysisMatch[1];
+          const analysis = await storage.getSwingAnalysis(analysisId);
+          
+          if (!analysis || analysis.userId !== userId) {
+            return res.status(403).json({ message: "Forbidden" });
+          }
+        } else {
+          // No ACL permission and not an analysis object
           return res.status(403).json({ message: "Forbidden" });
         }
       }
       
-      // Download the object to the response
-      await objectStorageService.downloadObject(objectFile, res);
+      // Download the object to the response with proper caching
+      await objectStorageService.downloadObject(objectFile, res, 3600);
     } catch (error) {
       console.error("Error serving object:", error);
       if (error instanceof ObjectNotFoundError) {
