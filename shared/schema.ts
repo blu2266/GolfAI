@@ -87,6 +87,9 @@ export const swingAnalyses = pgTable("swing_analyses", {
   clubId: varchar("club_id").references(() => clubs.id),
   isSaved: boolean("is_saved").default(false).notNull(),
   notes: text("notes"),
+  // Object storage paths for persistent storage when saved
+  objectStorageVideoPath: text("object_storage_video_path"),
+  objectStorageFramePaths: json("object_storage_frame_paths").$type<Record<string, string>>(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
