@@ -83,7 +83,14 @@ export class DatabaseStorage implements IStorage {
   async createSwingAnalysis(insertAnalysis: InsertSwingAnalysis): Promise<SwingAnalysis> {
     const [analysis] = await db
       .insert(swingAnalyses)
-      .values([insertAnalysis])
+      .values([{
+        ...insertAnalysis,
+        swingPhases: insertAnalysis.swingPhases as any,
+        keyMetrics: insertAnalysis.keyMetrics as any,
+        recommendations: insertAnalysis.recommendations as any,
+        ballMetrics: insertAnalysis.ballMetrics as any,
+        frameExtractions: insertAnalysis.frameExtractions as any,
+      }])
       .returning();
     return analysis;
   }
