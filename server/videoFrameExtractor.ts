@@ -87,36 +87,14 @@ export async function extractFramesFromVideo(
     const framePath = path.join(framesDir, frameName);
     
     try {
-      // Check if this is the impact or follow-through phase where ball tracking would be most visible
-      const shouldTrackBall = phase.name.toLowerCase().includes('impact') || 
-                            phase.name.toLowerCase().includes('follow');
-      
       await new Promise<void>((resolve, reject) => {
         // Ensure video path is absolute
         const absoluteVideoPath = path.isAbsolute(videoPath) ? videoPath : path.resolve(videoPath);
         
-        // Create filter for ball tracking if applicable
-        let filterComplex: string;
-        if (shouldTrackBall) {
-          // Simplified ball tracking filter that's more robust
-          filterComplex = [
-            'fps=20,scale=640:-1:flags=lanczos',
-            // Simple motion detection overlay
-            'split=2[a][b]',
-            '[a]setpts=PTS+0.1/TB[a1]',
-            '[b][a1]blend=all_mode=difference,curves=m=0/0 0.1/0.5 1/1,eq=brightness=2:contrast=2,colorkey=0x000000:0.3:0.5,colorchannelmixer=rr=1:rg=1:rb=0[motion]',
-            '[b][motion]overlay=format=auto[tracked]',
-            // Generate palette
-            '[tracked]split[s0][s1]',
-            '[s0]palettegen=max_colors=256:stats_mode=single[p]',
-            '[s1][p]paletteuse=dither=sierra2_4a'
-          ].join(',');
-        } else {
-          // Standard high-quality GIF filter
-          filterComplex = 'fps=20,scale=640:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=256:stats_mode=single[p];[s1][p]paletteuse=dither=sierra2_4a';
-        }
+        // Standard high-quality GIF filter
+        const filterComplex = 'fps=20,scale=640:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=256:stats_mode=single[p];[s1][p]paletteuse=dither=sierra2_4a';
         
-        // Create GIF with or without ball tracking
+        // Create GIF
         ffmpeg(absoluteVideoPath)
           .seekInput(start)
           .duration(duration)
@@ -125,27 +103,8 @@ export async function extractFramesFromVideo(
             '-loop', '0' // Loop forever
           ])
           .output(framePath)
-          .on('end', () => {
-            if (shouldTrackBall) {
-              console.log(`Created GIF with ball tracking attempt for ${phase.name}`);
-            }
-            resolve();
-          })
-          .on('error', (err: any) => {
-            console.error(`Failed with ball tracking, trying standard GIF for ${phase.name}`);
-            // Fallback to standard GIF if ball tracking fails
-            ffmpeg(absoluteVideoPath)
-              .seekInput(start)
-              .duration(duration)
-              .outputOptions([
-                '-vf', 'fps=20,scale=640:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=256:stats_mode=single[p];[s1][p]paletteuse=dither=sierra2_4a',
-                '-loop', '0'
-              ])
-              .output(framePath)
-              .on('end', () => resolve())
-              .on('error', (err2: any) => reject(err2))
-              .run();
-          })
+          .on('end', () => resolve())
+          .on('error', (err: any) => reject(err))
           .run();
       });
 
@@ -186,48 +145,18 @@ export async function createFullSwingGif(
     await new Promise<void>((resolve, reject) => {
       const absoluteVideoPath = path.isAbsolute(videoPath) ? videoPath : path.resolve(videoPath);
       
-      // Simplified ball tracking filter for full swing
-      const ballTrackingFilter = [
-        // Scale and set fps
-        'fps=24,scale=720:-1:flags=lanczos',
-        // Motion detection
-        'split=2[original][motion]',
-        // Detect fast motion (ball)
-        '[motion]tblend=all_mode=difference128,curves=m=0/0 0.5/0.5 1/0,eq=contrast=3:brightness=0.1[diff]',
-        // Create yellow overlay
-        '[diff]colorkey=0x808080:0.2:0.4,lutrgb=r=255:g=255:b=0,gblur=sigma=1.5[yellow]',
-        // Blend with original
-        '[original][yellow]overlay[tracked]',
-        // Generate optimized palette
-        '[tracked]split[s0][s1]',
-        '[s0]palettegen=max_colors=256:stats_mode=single[p]',
-        '[s1][p]paletteuse=dither=sierra2_4a'
-      ].join(',');
+      // High-quality GIF filter
+      const filterComplex = 'fps=24,scale=720:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=256:stats_mode=single[p];[s1][p]paletteuse=dither=sierra2_4a';
       
-      // Try with ball tracking first
+      // Create full swing GIF
       ffmpeg(absoluteVideoPath)
         .outputOptions([
-          '-vf', ballTrackingFilter,
+          '-vf', filterComplex,
           '-loop', '0' // Loop forever
         ])
         .output(gifPath)
-        .on('end', () => {
-          console.log('Created full swing GIF with ball tracking visualization');
-          resolve();
-        })
-        .on('error', (err: any) => {
-          console.error('Ball tracking failed, creating standard GIF:', err.message);
-          // Fallback to high-quality GIF without tracking
-          ffmpeg(absoluteVideoPath)
-            .outputOptions([
-              '-vf', 'fps=24,scale=720:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=256:stats_mode=single[p];[s1][p]paletteuse=dither=sierra2_4a',
-              '-loop', '0'
-            ])
-            .output(gifPath)
-            .on('end', () => resolve())
-            .on('error', (err2: any) => reject(err2))
-            .run();
-        })
+        .on('end', () => resolve())
+        .on('error', (err: any) => reject(err))
         .run();
     });
 

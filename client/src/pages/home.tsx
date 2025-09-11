@@ -11,7 +11,9 @@ import golfCartImage from "@assets/image_1757541518772.png";
 
 export default function Home() {
   const [showResults, setShowResults] = useState(false);
-  const [currentAnalysisId, setCurrentAnalysisId] = useState<string | null>(null);
+  const [currentAnalysisId, setCurrentAnalysisId] = useState<string | null>(
+    null,
+  );
   const [showARGuide, setShowARGuide] = useState(false);
 
   const { data: recentAnalyses, isLoading } = useQuery<SwingAnalysis[]>({
@@ -31,8 +33,10 @@ export default function Home() {
   const formatTimeAgo = (date: Date | string) => {
     const now = new Date();
     const past = new Date(date);
-    const diffHours = Math.floor((now.getTime() - past.getTime()) / (1000 * 60 * 60));
-    
+    const diffHours = Math.floor(
+      (now.getTime() - past.getTime()) / (1000 * 60 * 60),
+    );
+
     if (diffHours < 1) return "Just now";
     if (diffHours < 24) return `${diffHours} hours ago`;
     const diffDays = Math.floor(diffHours / 24);
@@ -45,10 +49,10 @@ export default function Home() {
       <header className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <img 
-              src={golfCartImage} 
-              alt="SwingAI Logo" 
-              className="w-12 h-12 object-contain"
+            <img
+              src={golfCartImage}
+              alt="SwingAI Logo"
+              className="w-16 h-16 object-contain"
             />
             <h1 className="text-xl font-bold text-deep-navy">SwingAI</h1>
           </div>
@@ -67,13 +71,15 @@ export default function Home() {
         {!showResults ? (
           <section className="p-4 space-y-6">
             <div className="text-center py-4">
-              <h2 className="text-2xl font-bold text-deep-navy mb-2">Analyze Your Golf Swing</h2>
-              <p className="text-slate-600 text-sm">Upload a video and get AI-powered insights to improve your game</p>
+              <h2 className="text-2xl font-bold text-deep-navy mb-2">
+                Analyze Your Golf Swing
+              </h2>
+              <p className="text-slate-600 text-sm">
+                Upload a video and get AI-powered insights to improve your game
+              </p>
             </div>
 
-            <VideoUpload
-              onAnalysisComplete={handleAnalysisComplete}
-            />
+            <VideoUpload onAnalysisComplete={handleAnalysisComplete} />
 
             {/* AR Practice Mode */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
@@ -82,16 +88,21 @@ export default function Home() {
                   <Camera className="w-5 h-5 text-blue-600" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-deep-navy">AR Practice Mode</h3>
-                  <p className="text-sm text-slate-600">Real-time swing guidance</p>
+                  <h3 className="font-semibold text-deep-navy">
+                    AR Practice Mode
+                  </h3>
+                  <p className="text-sm text-slate-600">
+                    Real-time swing guidance
+                  </p>
                 </div>
               </div>
               <p className="text-sm text-slate-600 mb-4">
-                Use your camera for live feedback on posture, alignment, and setup position.
+                Use your camera for live feedback on posture, alignment, and
+                setup position.
               </p>
               <Button
                 onClick={() => {
-                  console.log('AR button clicked');
+                  console.log("AR button clicked");
                   setShowARGuide(true);
                 }}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white"
@@ -104,11 +115,16 @@ export default function Home() {
 
             {/* Recent Analyses */}
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-slate-700 px-1">Recent Analyses</h3>
+              <h3 className="text-sm font-semibold text-slate-700 px-1">
+                Recent Analyses
+              </h3>
               {isLoading ? (
                 <div className="space-y-3">
                   {[1, 2, 3].map((i) => (
-                    <div key={i} className="bg-white rounded-xl p-4 shadow-sm border border-slate-200 animate-pulse">
+                    <div
+                      key={i}
+                      className="bg-white rounded-xl p-4 shadow-sm border border-slate-200 animate-pulse"
+                    >
                       <div className="flex items-center space-x-4">
                         <div className="w-16 h-12 bg-slate-200 rounded-lg"></div>
                         <div className="flex-1 space-y-2">
@@ -136,7 +152,9 @@ export default function Home() {
                         </div>
                       </div>
                       <div className="flex-1 text-left">
-                        <h4 className="font-semibold text-sm text-deep-navy">{analysis.title}</h4>
+                        <h4 className="font-semibold text-sm text-deep-navy">
+                          {analysis.title}
+                        </h4>
                         <p className="text-xs text-slate-600 flex items-center">
                           <Clock className="w-3 h-3 mr-1" />
                           {formatTimeAgo(analysis.createdAt)}
@@ -158,15 +176,17 @@ export default function Home() {
                     <Star className="w-8 h-8 text-slate-400" />
                   </div>
                   <p className="text-sm">No analyses yet</p>
-                  <p className="text-xs">Upload your first swing to get started</p>
+                  <p className="text-xs">
+                    Upload your first swing to get started
+                  </p>
                 </div>
               )}
             </div>
           </section>
         ) : (
           currentAnalysisId && (
-            <AnalysisResults 
-              analysisId={currentAnalysisId} 
+            <AnalysisResults
+              analysisId={currentAnalysisId}
               onBack={handleBackToUpload}
             />
           )
@@ -177,9 +197,11 @@ export default function Home() {
 
       {/* AR Guide Modal */}
       {showARGuide ? (
-        <ARSwingGuide onClose={() => {
-          setShowARGuide(false);
-        }} />
+        <ARSwingGuide
+          onClose={() => {
+            setShowARGuide(false);
+          }}
+        />
       ) : null}
     </div>
   );
