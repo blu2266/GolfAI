@@ -56,7 +56,7 @@ export default function Home() {
               alt="SwingAI Logo"
               className="w-16 h-16 object-contain"
             />
-            <h1 className="text-xl font-bold text-deep-navy">SwingAI</h1>
+            <h1 className="text-xl font-bold text-deep-navy">Tee'd Up</h1>
           </div>
           <button className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
             <div className="space-y-1">
