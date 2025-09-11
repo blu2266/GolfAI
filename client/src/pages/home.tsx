@@ -9,6 +9,8 @@ import type { SwingAnalysis } from "@shared/schema";
 import { Clock, Star, Camera } from "lucide-react";
 import golfCartImage from "@assets/image_1757541518772.png";
 
+import Generated_Image_September_10__2025___9_58PM from "@assets/Generated Image September 10, 2025 - 9_58PM.jpeg";
+
 export default function Home() {
   const [showResults, setShowResults] = useState(false);
   const [currentAnalysisId, setCurrentAnalysisId] = useState<string | null>(
@@ -50,7 +52,7 @@ export default function Home() {
         <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <img
-              src={golfCartImage}
+              src={Generated_Image_September_10__2025___9_58PM}
               alt="SwingAI Logo"
               className="w-16 h-16 object-contain"
             />
@@ -65,7 +67,6 @@ export default function Home() {
           </button>
         </div>
       </header>
-
       {/* Main Content */}
       <main className="max-w-md mx-auto pb-20">
         {!showResults ? (
@@ -192,9 +193,7 @@ export default function Home() {
           )
         )}
       </main>
-
       <BottomNavigation currentTab="home" />
-
       {/* AR Guide Modal */}
       {showARGuide ? (
         <ARSwingGuide
