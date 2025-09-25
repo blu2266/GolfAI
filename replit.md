@@ -88,7 +88,7 @@ The application follows a full-stack architecture with a React frontend, Express
 - **Production**: Runs compiled JavaScript bundle
 - **Database**: Requires `DATABASE_URL` environment variable
 - **AI Integration**: Requires `GEMINI_API_KEY` environment variable
-- **Native Auth Callback**: Native apps handle login redirects via the `golfai://auth/callback` deep link scheme registered in Capacitor
+- **Native Auth Callback**: Native apps handle login redirects via the `golfai://auth/callback` deep link scheme registered in Capacitor (with a fallback `capacitor://` host for the in-app browser)
 
 ### Key Architectural Decisions
 

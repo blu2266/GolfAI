@@ -59,6 +59,14 @@
                                 <string>golfai</string>
                         </array>
                 </dict>
+                <dict>
+                        <key>CFBundleURLName</key>
+                        <string>capacitor-localhost</string>
+                        <key>CFBundleURLSchemes</key>
+                        <array>
+                                <string>capacitor</string>
+                        </array>
+                </dict>
         </array>
 </dict>
 </plist>
