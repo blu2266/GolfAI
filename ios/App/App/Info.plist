@@ -55,12 +55,7 @@
                         <key>CFBundleTypeRole</key>
                         <string>Editor</string>
                         <key>CFBundleURLName</key>
-                        <string>golfai</string>
-
-=======
-                        <key>CFBundleURLName</key>
                         <string>com.swingai.golfapp</string>
-
                         <key>CFBundleURLSchemes</key>
                         <array>
                                 <string>golfai</string>
