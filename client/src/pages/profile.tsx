@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import type { Club, UserPreferences } from "@shared/schema";
+import { resolveApiUrl } from "@/lib/api";
 
 interface ClubFormData {
   name: string;
@@ -53,10 +54,11 @@ export default function Profile() {
   // Mutations
   const createClubMutation = useMutation({
     mutationFn: async (data: ClubFormData) => {
-      const response = await fetch("/api/clubs", {
+      const response = await fetch(resolveApiUrl("/api/clubs"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
+        credentials: "include",
       });
       if (!response.ok) throw new Error("Failed to create club");
       return response.json();
@@ -74,7 +76,7 @@ export default function Profile() {
 
   const updateClubMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<ClubFormData> }) => {
-      const response = await fetch(`/api/clubs/${id}`, {
+      const response = await fetch(resolveApiUrl(`/api/clubs/${id}`), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -96,7 +98,7 @@ export default function Profile() {
 
   const deleteClubMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`/api/clubs/${id}`, {
+      const response = await fetch(resolveApiUrl(`/api/clubs/${id}`), {
         method: "DELETE",
         credentials: "include",
       });
@@ -114,7 +116,7 @@ export default function Profile() {
 
   const updatePreferencesMutation = useMutation({
     mutationFn: async (data: Partial<UserPreferences>) => {
-      const response = await fetch(`/api/preferences`, {
+      const response = await fetch(resolveApiUrl(`/api/preferences`), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),

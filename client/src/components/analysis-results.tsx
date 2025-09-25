@@ -13,6 +13,7 @@ import { ArrowLeft, Star, TrendingUp, Lightbulb, ArrowRight, Target, Save, X, Th
 import { useToast } from "@/hooks/use-toast";
 import { getVideoUrl, getPhaseGifUrl, getFullSwingGifUrl } from "@/lib/media-utils";
 import type { SwingAnalysis, Club } from "@shared/schema";
+import { resolveApiUrl } from "@/lib/api";
 
 interface AnalysisResultsProps {
   analysisId: string;
@@ -36,10 +37,11 @@ export function AnalysisResults({ analysisId, onBack }: AnalysisResultsProps) {
   
   const saveMutation = useMutation({
     mutationFn: async (data: { isSaved: boolean; notes?: string; clubId?: string }) => {
-      const response = await fetch(`/api/swing-analyses/${analysisId}/save`, {
+      const response = await fetch(resolveApiUrl(`/api/swing-analyses/${analysisId}/save`), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
+        credentials: "include",
       });
       if (!response.ok) throw new Error("Failed to save analysis");
       return response.json();

@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { CloudUpload, Video, Play, Check, Loader2 } from "lucide-react";
+import { resolveApiUrl } from "@/lib/api";
 
 interface VideoUploadProps {
   onAnalysisComplete: (analysisId: string) => void;
@@ -29,9 +30,10 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
 
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      const response = await fetch("/api/analyze-swing", {
+      const response = await fetch(resolveApiUrl("/api/analyze-swing"), {
         method: "POST",
         body: formData,
+        credentials: "include",
       });
       
       if (!response.ok) {
