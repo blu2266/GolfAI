@@ -3,7 +3,7 @@ import { Strategy, type VerifyFunction } from "openid-client/passport";
 
 import passport from "passport";
 import session from "express-session";
-import type { Express, RequestHandler } from "express";
+import type { Express, Request, RequestHandler } from "express";
 import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
@@ -43,6 +43,33 @@ export function getSession() {
       sameSite: "none" as const,
     },
   });
+}
+
+function isSafeReturnTo(url: string) {
+  if (url.startsWith("golfai://")) {
+    return true;
+  }
+
+  if (!url.startsWith("/")) {
+    return false;
+  }
+
+  // Prevent network-path references (e.g. //example.com)
+  if (url.startsWith("//")) {
+    return false;
+  }
+
+  return true;
+}
+
+function getReturnToParam(req: Request) {
+  const { returnTo } = req.query;
+
+  if (Array.isArray(returnTo)) {
+    return typeof returnTo[0] === "string" ? returnTo[0] : undefined;
+  }
+
+  return typeof returnTo === "string" ? returnTo : undefined;
 }
 
 function updateUserSession(
@@ -103,6 +130,26 @@ export async function setupAuth(app: Express) {
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
   app.get("/api/login", (req, res, next) => {
+    const requestedReturnTo = getReturnToParam(req);
+
+    const sessionWithReturnTo = req.session as session.Session & {
+      returnTo?: string;
+    };
+
+    if (requestedReturnTo) {
+      if (isSafeReturnTo(requestedReturnTo)) {
+        sessionWithReturnTo.returnTo = requestedReturnTo;
+      } else {
+        delete sessionWithReturnTo.returnTo;
+        console.warn(
+          "Ignoring unsafe returnTo parameter",
+          requestedReturnTo
+        );
+      }
+    } else {
+      delete sessionWithReturnTo.returnTo;
+    }
+
     passport.authenticate(`replitauth:${req.hostname}`, {
       prompt: "login consent",
       scope: ["openid", "email", "profile", "offline_access"],
@@ -110,8 +157,17 @@ export async function setupAuth(app: Express) {
   });
 
   app.get("/api/callback", (req, res, next) => {
+    const sessionWithReturnTo = req.session as session.Session & {
+      returnTo?: string;
+    };
+    const savedReturnTo = sessionWithReturnTo?.returnTo;
+
+    if (savedReturnTo) {
+      delete sessionWithReturnTo.returnTo;
+    }
+
     passport.authenticate(`replitauth:${req.hostname}`, {
-      successReturnToOrRedirect: "/",
+      successReturnToOrRedirect: savedReturnTo ?? "/",
       failureRedirect: "/api/login",
     })(req, res, next);
   });
