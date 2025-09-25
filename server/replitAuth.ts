@@ -40,6 +40,7 @@ export function getSession() {
       httpOnly: true,
       secure: true,
       maxAge: sessionTtl,
+      sameSite: "none" as const,
     },
   });
 }
