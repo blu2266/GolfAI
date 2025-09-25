@@ -67,6 +67,31 @@ async function upsertUser(
   });
 }
 
+const MAX_RETURN_TO_LENGTH = 2048;
+const ALLOWED_RETURN_TO_SCHEMES = new Set(["golfai"]);
+
+function sanitizeReturnTo(value: unknown): string | undefined {
+  if (typeof value !== "string" || value.length > MAX_RETURN_TO_LENGTH) {
+    return undefined;
+  }
+
+  try {
+    const parsed = new URL(value);
+    const scheme = parsed.protocol.replace(":", "");
+    if (ALLOWED_RETURN_TO_SCHEMES.has(scheme)) {
+      return parsed.toString();
+    }
+    return undefined;
+  } catch {
+    if (value.startsWith("/") && !value.startsWith("//")) {
+      return value;
+    }
+    return undefined;
+  }
+}
+
+type SessionWithReturnTo = session.Session & { returnTo?: string };
+
 export async function setupAuth(app: Express) {
   app.set("trust proxy", 1);
   app.use(getSession());
@@ -103,17 +128,87 @@ export async function setupAuth(app: Express) {
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
   app.get("/api/login", (req, res, next) => {
-    passport.authenticate(`replitauth:${req.hostname}`, {
-      prompt: "login consent",
-      scope: ["openid", "email", "profile", "offline_access"],
-    })(req, res, next);
+    const loginSession = req.session as SessionWithReturnTo;
+    const requestedReturnTo = sanitizeReturnTo(req.query.returnTo);
+    let sessionChanged = false;
+
+    if (requestedReturnTo) {
+      if (loginSession.returnTo !== requestedReturnTo) {
+        loginSession.returnTo = requestedReturnTo;
+        sessionChanged = true;
+      }
+    } else if (loginSession.returnTo) {
+      delete loginSession.returnTo;
+      sessionChanged = true;
+    }
+
+    const triggerLogin = () =>
+      passport.authenticate(`replitauth:${req.hostname}`, {
+        prompt: "login consent",
+        scope: ["openid", "email", "profile", "offline_access"],
+      })(req, res, next);
+
+    if (sessionChanged) {
+      req.session.save((error) => {
+        if (error) {
+          next(error);
+          return;
+        }
+        triggerLogin();
+      });
+      return;
+    }
+
+    triggerLogin();
   });
 
   app.get("/api/callback", (req, res, next) => {
-    passport.authenticate(`replitauth:${req.hostname}`, {
-      successReturnToOrRedirect: "/",
-      failureRedirect: "/api/login",
-    })(req, res, next);
+    const loginSession = req.session as SessionWithReturnTo;
+    const storedReturnTo = sanitizeReturnTo(loginSession.returnTo);
+    let sessionChanged = false;
+
+    if (loginSession.returnTo) {
+      delete loginSession.returnTo;
+      sessionChanged = true;
+    }
+
+    const handleAuth = () =>
+      passport.authenticate(
+        `replitauth:${req.hostname}`,
+        (error: any, user: Express.User | false | null) => {
+          if (error) {
+            next(error);
+            return;
+          }
+
+          if (!user) {
+            res.redirect("/api/login");
+            return;
+          }
+
+          req.logIn(user, (loginError) => {
+            if (loginError) {
+              next(loginError);
+              return;
+            }
+
+            res.redirect(storedReturnTo ?? "/");
+          });
+        }
+      )(req, res, next);
+
+    if (sessionChanged) {
+      req.session.save((error) => {
+        if (error) {
+          next(error);
+          return;
+        }
+        handleAuth();
+      });
+      return;
+    }
+
+    handleAuth();
   });
 
   app.get("/api/logout", (req, res) => {
