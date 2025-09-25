@@ -1,3 +1,5 @@
+import { useCallback, useEffect, useRef } from "react";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,12 +15,44 @@ export default function Landing() {
   useEffect(() => {
     return () => {
       void cleanupNativeAuthListener();
+=======
+
+export default function Landing() {
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    return () => {
+      void cleanupNativeAuthListener();
+import { startNativeAuthFlow } from "@/lib/nativeAuth";
+
+export default function Landing() {
+  const [, navigate] = useLocation();
+  const cleanupRef = useRef<(() => void) | undefined>(undefined);
+
+  useEffect(() => {
+    return () => {
+      if (cleanupRef.current) {
+        cleanupRef.current();
+        cleanupRef.current = undefined;
+      }
     };
   }, []);
 
   const handleLogin = useCallback(() => {
     void launchLogin(() => setLocation("/"));
   }, [setLocation]);
+=======
+    if (cleanupRef.current) {
+      cleanupRef.current();
+      cleanupRef.current = undefined;
+    }
+
+    startNativeAuthFlow(() => navigate("/")).then((cleanup) => {
+      cleanupRef.current = cleanup ?? undefined;
+    }).catch((error) => {
+      console.error("Failed to initiate login", error);
+    });
+  }, [navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-950 dark:to-blue-950">

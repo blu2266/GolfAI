@@ -56,9 +56,21 @@
                         <string>Editor</string>
                         <key>CFBundleURLName</key>
                         <string>golfai</string>
+=======
+                        <key>CFBundleURLName</key>
+                        <string>com.swingai.golfapp</string>
                         <key>CFBundleURLSchemes</key>
                         <array>
                                 <string>golfai</string>
+                        </array>
+                </dict>
+=======
+                <dict>
+                        <key>CFBundleURLName</key>
+                        <string>capacitor-localhost</string>
+                        <key>CFBundleURLSchemes</key>
+                        <array>
+                                <string>capacitor</string>
                         </array>
                 </dict>
         </array>
