@@ -49,5 +49,16 @@
         <string>SwingAI needs access to your camera to record and analyze your golf swing for personalized feedback and improvement tips.</string>
         <key>NSMicrophoneUsageDescription</key>
         <string>SwingAI needs access to your microphone to record audio with your golf swing videos for complete analysis.</string>
+        <key>CFBundleURLTypes</key>
+        <array>
+                <dict>
+                        <key>CFBundleURLName</key>
+                        <string>com.swingai.golfapp</string>
+                        <key>CFBundleURLSchemes</key>
+                        <array>
+                                <string>golfai</string>
+                        </array>
+                </dict>
+        </array>
 </dict>
 </plist>
