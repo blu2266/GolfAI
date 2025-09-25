@@ -165,6 +165,38 @@ export async function setupAuth(app: Express) {
   app.get("/api/login", (req, res, next) => {
     const loginSession = req.session as SessionWithReturnTo;
     const requestedReturnTo = sanitizeReturnTo(req.query.returnTo);
+
+    let sessionChanged = false;
+
+    if (requestedReturnTo) {
+      if (loginSession.returnTo !== requestedReturnTo) {
+        loginSession.returnTo = requestedReturnTo;
+        sessionChanged = true;
+      }
+    } else if (loginSession.returnTo) {
+      delete loginSession.returnTo;
+      sessionChanged = true;
+    }
+
+    const triggerLogin = () =>
+      passport.authenticate(`replitauth:${req.hostname}`, {
+        prompt: "login consent",
+        scope: ["openid", "email", "profile", "offline_access"],
+      })(req, res, next);
+
+    if (sessionChanged) {
+      req.session.save((error) => {
+        if (error) {
+          next(error);
+          return;
+        }
+        triggerLogin();
+      });
+      return;
+    }
+
+    triggerLogin();
+=======
     if (requestedReturnTo) {
       loginSession.returnTo = requestedReturnTo;
     } else if (loginSession.returnTo) {
@@ -195,11 +227,58 @@ export async function setupAuth(app: Express) {
       prompt: "login consent",
       scope: ["openid", "email", "profile", "offline_access"],
     })(req, res, next);
+
   });
 
   app.get("/api/callback", (req, res, next) => {
     const loginSession = req.session as SessionWithReturnTo;
     const storedReturnTo = sanitizeReturnTo(loginSession.returnTo);
+
+    let sessionChanged = false;
+
+    if (loginSession.returnTo) {
+      delete loginSession.returnTo;
+      sessionChanged = true;
+    }
+
+    const handleAuth = () =>
+      passport.authenticate(
+        `replitauth:${req.hostname}`,
+        (error: any, user: Express.User | false | null) => {
+          if (error) {
+            next(error);
+            return;
+          }
+
+          if (!user) {
+            res.redirect("/api/login");
+            return;
+          }
+
+          req.logIn(user, (loginError) => {
+            if (loginError) {
+              next(loginError);
+              return;
+            }
+
+            res.redirect(storedReturnTo ?? "/");
+          });
+        }
+      )(req, res, next);
+
+    if (sessionChanged) {
+      req.session.save((error) => {
+        if (error) {
+          next(error);
+          return;
+        }
+        handleAuth();
+      });
+      return;
+    }
+
+    handleAuth();
+=======
     if (loginSession.returnTo) {
       delete loginSession.returnTo;
     }
@@ -235,6 +314,7 @@ export async function setupAuth(app: Express) {
       successReturnToOrRedirect: safeReturnTo ?? "/",
       failureRedirect: "/api/login",
     })(req, res, next);
+
   });
 
   app.get("/api/logout", (req, res) => {

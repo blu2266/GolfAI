@@ -9,13 +9,6 @@ import { useLocation } from "wouter";
 
 import { cleanupNativeAuthListener, launchLogin } from "@/lib/nativeAuth";
 
-export default function Landing() {
-  const [, setLocation] = useLocation();
-
-  useEffect(() => {
-    return () => {
-      void cleanupNativeAuthListener();
-=======
 
 export default function Landing() {
   const [, setLocation] = useLocation();
@@ -23,6 +16,15 @@ export default function Landing() {
   useEffect(() => {
     return () => {
       void cleanupNativeAuthListener();
+
+
+export default function Landing() {
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    return () => {
+      void cleanupNativeAuthListener();
+
 import { startNativeAuthFlow } from "@/lib/nativeAuth";
 
 export default function Landing() {
@@ -35,13 +37,14 @@ export default function Landing() {
         cleanupRef.current();
         cleanupRef.current = undefined;
       }
+
     };
   }, []);
 
   const handleLogin = useCallback(() => {
     void launchLogin(() => setLocation("/"));
   }, [setLocation]);
-=======
+
     if (cleanupRef.current) {
       cleanupRef.current();
       cleanupRef.current = undefined;
@@ -53,6 +56,7 @@ export default function Landing() {
       console.error("Failed to initiate login", error);
     });
   }, [navigate]);
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-950 dark:to-blue-950">

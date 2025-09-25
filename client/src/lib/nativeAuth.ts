@@ -86,7 +86,7 @@ export async function launchLogin(onReturn?: (target?: string) => void) {
   // If the Browser plugin is unavailable or fails at runtime, fall back to a direct navigation
   // so the login flow can still proceed inside the web view.
   window.location.href = loginTarget;
-=======
+
   await Browser.open({ url: loginTarget, presentationStyle: "popover" });
 }
 
@@ -94,8 +94,7 @@ export async function cleanupNativeAuthListener() {
   if (appUrlListener) {
     await appUrlListener.remove();
     appUrlListener = undefined;
-=======
-=======
+
 import { Capacitor } from "@capacitor/core";
 import type { PluginListenerHandle } from "@capacitor/core";
 import { App } from "@capacitor/app";
