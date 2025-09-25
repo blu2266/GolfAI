@@ -45,7 +45,7 @@ export function getSession() {
   });
 }
 
-function isSafeReturnTo(url: string) {
+export function isSafeReturnTo(url: string) {
   if (url.startsWith("golfai://")) {
     return true;
   }
@@ -62,14 +62,22 @@ function isSafeReturnTo(url: string) {
   return true;
 }
 
-function getReturnToParam(req: Request) {
-  const { returnTo } = req.query;
-
-  if (Array.isArray(returnTo)) {
-    return typeof returnTo[0] === "string" ? returnTo[0] : undefined;
+export function parseReturnToParam(rawReturnTo: unknown): string | undefined {
+  if (Array.isArray(rawReturnTo)) {
+    return typeof rawReturnTo[0] === "string" ? rawReturnTo[0] : undefined;
   }
 
-  return typeof returnTo === "string" ? returnTo : undefined;
+  return typeof rawReturnTo === "string" ? rawReturnTo : undefined;
+}
+
+export function sanitizeReturnTo(rawReturnTo: unknown): string | undefined {
+  const parsedReturnTo = parseReturnToParam(rawReturnTo);
+
+  if (!parsedReturnTo) {
+    return undefined;
+  }
+
+  return isSafeReturnTo(parsedReturnTo) ? parsedReturnTo : undefined;
 }
 
 function updateUserSession(
@@ -130,23 +138,24 @@ export async function setupAuth(app: Express) {
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
   app.get("/api/login", (req, res, next) => {
-    const requestedReturnTo = getReturnToParam(req);
+    const requestedReturnTo = parseReturnToParam(req.query.returnTo);
+    const safeReturnTo = sanitizeReturnTo(req.query.returnTo);
 
     const sessionWithReturnTo = req.session as session.Session & {
       returnTo?: string;
     };
 
-    if (requestedReturnTo) {
-      if (isSafeReturnTo(requestedReturnTo)) {
-        sessionWithReturnTo.returnTo = requestedReturnTo;
-      } else {
-        delete sessionWithReturnTo.returnTo;
+    if (safeReturnTo) {
+      sessionWithReturnTo.returnTo = safeReturnTo;
+      console.info("Stored returnTo for login redirect", safeReturnTo);
+    } else {
+      if (requestedReturnTo) {
         console.warn(
           "Ignoring unsafe returnTo parameter",
           requestedReturnTo
         );
       }
-    } else {
+
       delete sessionWithReturnTo.returnTo;
     }
 
@@ -160,14 +169,27 @@ export async function setupAuth(app: Express) {
     const sessionWithReturnTo = req.session as session.Session & {
       returnTo?: string;
     };
-    const savedReturnTo = sessionWithReturnTo?.returnTo;
+    const storedReturnTo = sessionWithReturnTo?.returnTo;
+    const safeReturnTo = sanitizeReturnTo(storedReturnTo);
 
-    if (savedReturnTo) {
+    if (storedReturnTo) {
+      if (safeReturnTo) {
+        console.info(
+          "Using stored returnTo for login callback",
+          safeReturnTo
+        );
+      } else {
+        console.warn(
+          "Discarding unsafe returnTo from session",
+          storedReturnTo
+        );
+      }
+
       delete sessionWithReturnTo.returnTo;
     }
 
     passport.authenticate(`replitauth:${req.hostname}`, {
-      successReturnToOrRedirect: savedReturnTo ?? "/",
+      successReturnToOrRedirect: safeReturnTo ?? "/",
       failureRedirect: "/api/login",
     })(req, res, next);
   });
