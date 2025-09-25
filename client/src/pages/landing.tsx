@@ -4,6 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Play, Target, TrendingUp, Users } from "lucide-react";
+import { useCallback, useEffect } from "react";
+import { useLocation } from "wouter";
+
+import { cleanupNativeAuthListener, launchLogin } from "@/lib/nativeAuth";
+
+export default function Landing() {
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    return () => {
+      void cleanupNativeAuthListener();
 import { startNativeAuthFlow } from "@/lib/nativeAuth";
 
 export default function Landing() {
@@ -20,6 +31,8 @@ export default function Landing() {
   }, []);
 
   const handleLogin = useCallback(() => {
+    void launchLogin(() => setLocation("/"));
+  }, [setLocation]);
     if (cleanupRef.current) {
       cleanupRef.current();
       cleanupRef.current = undefined;

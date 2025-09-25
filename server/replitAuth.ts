@@ -102,6 +102,31 @@ async function upsertUser(
   });
 }
 
+const MAX_RETURN_TO_LENGTH = 2048;
+const ALLOWED_RETURN_TO_SCHEMES = new Set(["golfai"]);
+
+function sanitizeReturnTo(value: unknown): string | undefined {
+  if (typeof value !== "string" || value.length > MAX_RETURN_TO_LENGTH) {
+    return undefined;
+  }
+
+  try {
+    const parsed = new URL(value);
+    const scheme = parsed.protocol.replace(":", "");
+    if (ALLOWED_RETURN_TO_SCHEMES.has(scheme)) {
+      return parsed.toString();
+    }
+    return undefined;
+  } catch {
+    if (value.startsWith("/") && !value.startsWith("//")) {
+      return value;
+    }
+    return undefined;
+  }
+}
+
+type SessionWithReturnTo = session.Session & { returnTo?: string };
+
 export async function setupAuth(app: Express) {
   app.set("trust proxy", 1);
   app.use(getSession());
@@ -138,6 +163,12 @@ export async function setupAuth(app: Express) {
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
   app.get("/api/login", (req, res, next) => {
+    const loginSession = req.session as SessionWithReturnTo;
+    const requestedReturnTo = sanitizeReturnTo(req.query.returnTo);
+    if (requestedReturnTo) {
+      loginSession.returnTo = requestedReturnTo;
+    } else if (loginSession.returnTo) {
+      delete loginSession.returnTo;
     const requestedReturnTo = parseReturnToParam(req.query.returnTo);
     const safeReturnTo = sanitizeReturnTo(req.query.returnTo);
 
@@ -166,6 +197,14 @@ export async function setupAuth(app: Express) {
   });
 
   app.get("/api/callback", (req, res, next) => {
+    const loginSession = req.session as SessionWithReturnTo;
+    const storedReturnTo = sanitizeReturnTo(loginSession.returnTo);
+    if (loginSession.returnTo) {
+      delete loginSession.returnTo;
+    }
+
+    passport.authenticate(`replitauth:${req.hostname}`, {
+      successReturnToOrRedirect: storedReturnTo ?? "/",
     const sessionWithReturnTo = req.session as session.Session & {
       returnTo?: string;
     };
