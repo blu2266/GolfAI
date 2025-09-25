@@ -1,9 +1,37 @@
+import { useCallback, useEffect, useRef } from "react";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Play, Target, TrendingUp, Users } from "lucide-react";
+import { startNativeAuthFlow } from "@/lib/nativeAuth";
 
 export default function Landing() {
+  const [, navigate] = useLocation();
+  const cleanupRef = useRef<(() => void) | undefined>(undefined);
+
+  useEffect(() => {
+    return () => {
+      if (cleanupRef.current) {
+        cleanupRef.current();
+        cleanupRef.current = undefined;
+      }
+    };
+  }, []);
+
+  const handleLogin = useCallback(() => {
+    if (cleanupRef.current) {
+      cleanupRef.current();
+      cleanupRef.current = undefined;
+    }
+
+    startNativeAuthFlow(() => navigate("/")).then((cleanup) => {
+      cleanupRef.current = cleanup ?? undefined;
+    }).catch((error) => {
+      console.error("Failed to initiate login", error);
+    });
+  }, [navigate]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-950 dark:to-blue-950">
       <div className="container mx-auto px-4 py-16">
@@ -20,9 +48,9 @@ export default function Landing() {
             Upload your golf swing videos and get instant, professional-level analysis. 
             Track your progress, manage your clubs, and improve your game with AI-powered insights.
           </p>
-          <Button 
-            onClick={() => window.location.href = "/api/login"}
-            size="lg" 
+          <Button
+            onClick={handleLogin}
+            size="lg"
             className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg"
           >
             Get Started
@@ -126,9 +154,9 @@ export default function Landing() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button 
-                onClick={() => window.location.href = "/api/login"}
-                size="lg" 
+              <Button
+                onClick={handleLogin}
+                size="lg"
                 className="bg-green-600 hover:bg-green-700 text-white"
               >
                 Start Your Free Analysis
