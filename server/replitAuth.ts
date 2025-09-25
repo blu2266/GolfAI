@@ -169,6 +169,7 @@ export async function setupAuth(app: Express) {
       loginSession.returnTo = requestedReturnTo;
     } else if (loginSession.returnTo) {
       delete loginSession.returnTo;
+=======
     const requestedReturnTo = parseReturnToParam(req.query.returnTo);
     const safeReturnTo = sanitizeReturnTo(req.query.returnTo);
 
@@ -203,6 +204,9 @@ export async function setupAuth(app: Express) {
       delete loginSession.returnTo;
     }
 
+    passport.authenticate(`replitauth:${req.hostname}`, {
+      successReturnToOrRedirect: storedReturnTo ?? "/",
+=======
     passport.authenticate(`replitauth:${req.hostname}`, {
       successReturnToOrRedirect: storedReturnTo ?? "/",
     const sessionWithReturnTo = req.session as session.Session & {

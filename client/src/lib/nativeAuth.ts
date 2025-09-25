@@ -70,6 +70,23 @@ export async function launchLogin(onReturn?: (target?: string) => void) {
     return;
   }
 
+  const hasBrowserPlugin = Capacitor.isPluginAvailable("Browser");
+
+  if (hasBrowserPlugin) {
+    try {
+      await Browser.open({ url: loginTarget, presentationStyle: "popover" });
+      return;
+    } catch (error) {
+      console.error("Failed to initiate login", error);
+    }
+  } else {
+    console.warn("Capacitor Browser plugin is not available; falling back to window navigation.");
+  }
+
+  // If the Browser plugin is unavailable or fails at runtime, fall back to a direct navigation
+  // so the login flow can still proceed inside the web view.
+  window.location.href = loginTarget;
+=======
   await Browser.open({ url: loginTarget, presentationStyle: "popover" });
 }
 
@@ -77,6 +94,7 @@ export async function cleanupNativeAuthListener() {
   if (appUrlListener) {
     await appUrlListener.remove();
     appUrlListener = undefined;
+=======
 =======
 import { Capacitor } from "@capacitor/core";
 import type { PluginListenerHandle } from "@capacitor/core";

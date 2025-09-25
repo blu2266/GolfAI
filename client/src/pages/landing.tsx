@@ -15,6 +15,14 @@ export default function Landing() {
   useEffect(() => {
     return () => {
       void cleanupNativeAuthListener();
+=======
+
+export default function Landing() {
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    return () => {
+      void cleanupNativeAuthListener();
 import { startNativeAuthFlow } from "@/lib/nativeAuth";
 
 export default function Landing() {
@@ -33,6 +41,7 @@ export default function Landing() {
   const handleLogin = useCallback(() => {
     void launchLogin(() => setLocation("/"));
   }, [setLocation]);
+=======
     if (cleanupRef.current) {
       cleanupRef.current();
       cleanupRef.current = undefined;
